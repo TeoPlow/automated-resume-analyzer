@@ -1,0 +1,199 @@
+services:
+  api:
+    image: python:3.12-slim
+    container_name: ara-api
+    working_dir: /app
+    command: >
+      sh -c "pip install --no-cache-dir fastapi uvicorn[standard] &&
+      uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    volumes:
+      - ./services/api:/app
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: resume_analyzer
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_password
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    networks:
+      - app-network
+
+  resume:
+    image: python:3.12-slim
+    container_name: ara-resume
+    working_dir: /app
+    command: >
+      sh -c "pip install --no-cache-dir fastapi uvicorn[standard] python-multipart boto3 &&
+      uvicorn main:app --host 0.0.0.0 --port 8001 --reload"
+    volumes:
+      - ./services/resume:/app
+    ports:
+      - "8001:8001"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: resume_analyzer
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_password
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    networks:
+      - app-network
+
+  matching:
+    image: python:3.12-slim
+    container_name: ara-matching
+    working_dir: /app
+    command: >
+      sh -c "pip install --no-cache-dir fastapi uvicorn[standard] &&
+      uvicorn main:app --host 0.0.0.0 --port 8002 --reload"
+    volumes:
+      - ./services/matching:/app
+    ports:
+      - "8002:8002"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: resume_analyzer
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_password
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    networks:
+      - app-network
+
+  vacancy:
+    image: python:3.12-slim
+    container_name: ara-vacancy
+    working_dir: /app
+    command: >
+      sh -c "pip install --no-cache-dir fastapi uvicorn[standard] &&
+      uvicorn main:app --host 0.0.0.0 --port 8003 --reload"
+    volumes:
+      - ./services/vacancy:/app
+    ports:
+      - "8003:8003"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: resume_analyzer
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_password
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ara-postgres
+    environment:
+      POSTGRES_DB: resume_analyzer
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app_user -d resume_analyzer"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: ara-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: ara-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - app-network
+
+volumes:
+  postgres-data:
+  redis-data:
+  rabbitmq-data:
+  minio-data:
+
+networks:
+  app-network:
+    driver: bridge
