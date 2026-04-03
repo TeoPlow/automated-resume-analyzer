@@ -56,18 +56,3 @@ def require_authenticated_actor(
         actor_type=actor_type,
         is_admin=_parse_bool_header(x_is_admin),
     )
-
-
-def require_internal_service(
-    x_internal_token: Annotated[str | None, Header()] = None,
-) -> None:
-    internal_token = os.getenv("GATEWAY_INTERNAL_TOKEN")
-    if not internal_token:
-        return
-
-    if x_internal_token != internal_token:
-        raise_http(
-            HTTPStatus.UNAUTHORIZED,
-            "unauthorized",
-            "Invalid internal service token",
-        )
