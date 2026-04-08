@@ -1,77 +1,42 @@
 services:
-  api:
-    image: python:3.12-slim
-    container_name: ara-api
-    working_dir: /app/services/api
-    command: >
-      sh -c "pip install --no-cache-dir fastapi uvicorn[standard] httpx redis &&
-      uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+  frontend:
+    build: ./frontend
+    container_name: ara-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - gateway
+    networks:
+      - app-network
+
+  gateway:
+    build: .
+    container_name: ara-gateway
+    command: uvicorn gateway.app:app --host 0.0.0.0 --port 8000 --reload
     env_file:
       - .env
     volumes:
       - ./:/app
     ports:
       - "8000:8000"
-    environment:
-      PYTHONPATH: /app
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      minio:
-        condition: service_started
     networks:
       - app-network
 
   profile:
-    image: python:3.12-slim
+    build: .
     container_name: ara-profile
-    working_dir: /app/services/profile
-    command: >
-      sh -c "pip install --no-cache-dir fastapi uvicorn[standard] python-multipart boto3 SQLAlchemy 'psycopg[binary]' pika &&
-      uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    command: uvicorn profile.app:app --host 0.0.0.0 --port 8000 --reload
     env_file:
       - .env
     volumes:
       - ./:/app
     ports:
       - "8001:8000"
-    environment:
-      PYTHONPATH: /app
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      minio:
-        condition: service_started
-    networks:
-      - app-network
-
-  matching:
-    image: python:3.12-slim
-    container_name: ara-matching
-    working_dir: /app/services/matching
-    command: >
-      sh -c "pip install --no-cache-dir fastapi uvicorn[standard] SQLAlchemy 'psycopg[binary]' pika httpx &&
-      uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
-    env_file:
-      - .env
-    volumes:
-      - ./:/app
-    ports:
-      - "8002:8000"
-    environment:
-      PYTHONPATH: /app
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -81,56 +46,54 @@ services:
       - app-network
 
   vacancy:
-    image: python:3.12-slim
+    build: .
     container_name: ara-vacancy
-    working_dir: /app/services/vacancy
-    command: >
-      sh -c "pip install --no-cache-dir fastapi uvicorn[standard] SQLAlchemy 'psycopg[binary]' pika &&
-      uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    command: uvicorn vacancy.app:app --host 0.0.0.0 --port 8000 --reload
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+    ports:
+      - "8002:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  matching:
+    build: .
+    container_name: ara-matching
+    command: uvicorn matching.app:app --host 0.0.0.0 --port 8000 --reload
     env_file:
       - .env
     volumes:
       - ./:/app
     ports:
       - "8003:8000"
-    environment:
-      PYTHONPATH: /app
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
       rabbitmq:
         condition: service_healthy
-      minio:
-        condition: service_started
     networks:
       - app-network
 
   search:
-    image: python:3.12-slim
+    build: .
     container_name: ara-search
-    working_dir: /app/services/search
-    command: >
-      sh -c "pip install --no-cache-dir fastapi uvicorn[standard] SQLAlchemy 'psycopg[binary]' &&
-      uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    command: uvicorn search.app:app --host 0.0.0.0 --port 8000 --reload
     env_file:
       - .env
     volumes:
       - ./:/app
     ports:
       - "8004:8000"
-    environment:
-      PYTHONPATH: /app
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      minio:
-        condition: service_started
     networks:
       - app-network
 
@@ -170,7 +133,7 @@ services:
       - app-network
 
   rabbitmq:
-    image: rabbitmq:3.13-management-alpine
+    image: rabbitmq:4.0-management-alpine
     container_name: ara-rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: guest

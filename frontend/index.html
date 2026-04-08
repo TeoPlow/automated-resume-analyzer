@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume Analyzer — HR Platform</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/components.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar hidden">
+      <div class="sidebar-header">
+        <h2>Resume Analyzer</h2>
+        <span class="sidebar-subtitle">HR Platform</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" data-page="dashboard" class="nav-item active">
+          <span class="nav-icon">📊</span> Дашборд
+        </a>
+        <a href="#" data-page="upload" class="nav-item">
+          <span class="nav-icon">📄</span> Загрузка резюме
+        </a>
+        <a href="#" data-page="candidates" class="nav-item">
+          <span class="nav-icon">👤</span> Кандидаты
+        </a>
+        <a href="#" data-page="vacancies" class="nav-item">
+          <span class="nav-icon">💼</span> Вакансии
+        </a>
+        <a href="#" data-page="matching" class="nav-item">
+          <span class="nav-icon">🎯</span> Матчинг
+        </a>
+        <a href="#" data-page="search" class="nav-item">
+          <span class="nav-icon">🔍</span> Поиск
+        </a>
+        <a href="#" data-page="integrations" class="nav-item nav-admin-only">
+          <span class="nav-icon">🔑</span> Интеграции
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <span id="user-display"></span>
+          <span id="user-role" class="badge"></span>
+        </div>
+        <button id="logout-btn" class="btn btn-sm btn-outline">Выйти</button>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main id="main-content">
+      <!-- Login page -->
+      <div id="page-login" class="page page-login active">
+        <div class="login-card">
+          <h1>Resume Analyzer</h1>
+          <p class="login-subtitle">Система автоматизированной обработки резюме</p>
+          <form id="login-form">
+            <div class="form-group">
+              <label for="login-username">Логин</label>
+              <input type="text" id="login-username" placeholder="admin" required autocomplete="username">
+            </div>
+            <div class="form-group">
+              <label for="login-password">Пароль</label>
+              <input type="password" id="login-password" placeholder="••••••" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Войти</button>
+            <p id="login-error" class="error-text hidden"></p>
+          </form>
+        </div>
+      </div>
+
+      <!-- Dashboard -->
+      <div id="page-dashboard" class="page hidden">
+        <div class="page-header">
+          <h1>Дашборд</h1>
+        </div>
+        <div class="stats-grid" id="dashboard-stats">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-candidates">—</div>
+            <div class="stat-label">Кандидатов</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-vacancies">—</div>
+            <div class="stat-label">Вакансий</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-matches">—</div>
+            <div class="stat-label">Результатов матчинга</div>
+          </div>
+        </div>
+        <div class="dashboard-grid">
+          <div class="card">
+            <h3>Кандидаты по грейдам</h3>
+            <div id="grades-chart" class="chart-container"></div>
+          </div>
+          <div class="card">
+            <h3>Топ навыков</h3>
+            <div id="skills-chart" class="chart-container"></div>
+          </div>
+          <div class="card">
+            <h3>Локации</h3>
+            <div id="locations-chart" class="chart-container"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload -->
+      <div id="page-upload" class="page hidden">
+        <div class="page-header">
+          <h1>Загрузка резюме</h1>
+        </div>
+        <div class="card upload-card">
+          <div id="drop-zone" class="drop-zone">
+            <div class="drop-zone-content">
+              <span class="drop-icon">📁</span>
+              <p>Перетащите файл сюда или нажмите для выбора</p>
+              <p class="text-muted">PDF, DOCX, DOC, TXT — до 10 МБ</p>
+            </div>
+            <input type="file" id="file-input" accept=".pdf,.docx,.doc,.txt" hidden>
+          </div>
+          <div class="form-group" style="margin-top:1rem">
+            <label for="upload-source">Источник</label>
+            <select id="upload-source">
+              <option value="web">Веб-интерфейс</option>
+              <option value="email">Email</option>
+              <option value="bot">Бот</option>
+              <option value="portal">Job-портал</option>
+            </select>
+          </div>
+          <button id="upload-btn" class="btn btn-primary" disabled>Загрузить</button>
+          <div id="upload-result" class="hidden" style="margin-top:1rem"></div>
+        </div>
+      </div>
+
+      <!-- Candidates list -->
+      <div id="page-candidates" class="page hidden">
+        <div class="page-header">
+          <h1>Кандидаты</h1>
+        </div>
+        <div class="card">
+          <div class="table-toolbar">
+            <input type="text" id="candidates-search" placeholder="Поиск по ФИО, навыкам..." class="search-input">
+            <select id="candidates-grade-filter" class="filter-select">
+              <option value="">Все грейды</option>
+              <option value="intern">Intern</option>
+              <option value="junior">Junior</option>
+              <option value="middle">Middle</option>
+              <option value="senior">Senior</option>
+              <option value="lead">Lead</option>
+            </select>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ФИО</th>
+                  <th>Email</th>
+                  <th>Грейд</th>
+                  <th>Опыт (лет)</th>
+                  <th>Навыки</th>
+                  <th>Локация</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="candidates-tbody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="candidates-pagination"></div>
+        </div>
+      </div>
+
+      <!-- Candidate detail -->
+      <div id="page-candidate-detail" class="page hidden">
+        <div class="page-header">
+          <button class="btn btn-sm btn-outline" onclick="App.navigate('candidates')">← Назад</button>
+          <h1 id="candidate-name">Кандидат</h1>
+        </div>
+        <div class="detail-grid">
+          <div class="card" id="candidate-info"></div>
+          <div class="card" id="candidate-resumes">
+            <h3>Резюме</h3>
+            <div id="resumes-list"></div>
+          </div>
+          <div class="card" id="candidate-matching">
+            <h3>Результаты матчинга</h3>
+            <div id="candidate-matches-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vacancies list -->
+      <div id="page-vacancies" class="page hidden">
+        <div class="page-header">
+          <h1>Вакансии</h1>
+          <button class="btn btn-primary" onclick="App.showCreateVacancy()">+ Создать вакансию</button>
+        </div>
+        <div class="card">
+          <div class="table-toolbar">
+            <select id="vacancies-status-filter" class="filter-select">
+              <option value="">Все статусы</option>
+              <option value="draft">Draft</option>
+              <option value="open">Open</option>
+              <option value="closed">Closed</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Название</th>
+                  <th>Отдел</th>
+                  <th>Грейд</th>
+                  <th>Локация</th>
+                  <th>Зарплата</th>
+                  <th>Статус</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="vacancies-tbody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="vacancies-pagination"></div>
+        </div>
+      </div>
+
+      <!-- Vacancy detail -->
+      <div id="page-vacancy-detail" class="page hidden">
+        <div class="page-header">
+          <button class="btn btn-sm btn-outline" onclick="App.navigate('vacancies')">← Назад</button>
+          <h1 id="vacancy-title">Вакансия</h1>
+        </div>
+        <div class="detail-grid">
+          <div class="card" id="vacancy-info"></div>
+          <div class="card" id="vacancy-requirements-card">
+            <h3>Требования</h3>
+            <div id="vacancy-requirements-list"></div>
+          </div>
+          <div class="card">
+            <div class="card-header-actions">
+              <h3>Лучшие кандидаты</h3>
+              <button class="btn btn-sm btn-primary" id="run-matching-vacancy-btn">Запустить матчинг</button>
+            </div>
+            <div id="vacancy-matches-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create/Edit Vacancy modal -->
+      <div id="vacancy-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 id="vacancy-modal-title">Создать вакансию</h2>
+            <button class="modal-close" onclick="App.closeModal('vacancy-modal')">&times;</button>
+          </div>
+          <form id="vacancy-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Название *</label>
+                <input type="text" name="title" required>
+              </div>
+              <div class="form-group">
+                <label>Отдел</label>
+                <input type="text" name="department">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Описание</label>
+              <textarea name="description" rows="3"></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Локация</label>
+                <input type="text" name="location" placeholder="Москва / remote">
+              </div>
+              <div class="form-group">
+                <label>Грейд (через запятую)</label>
+                <input type="text" name="grade" placeholder="junior, middle">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Зарплата от</label>
+                <input type="number" name="salary_min" min="0">
+              </div>
+              <div class="form-group">
+                <label>Зарплата до</label>
+                <input type="number" name="salary_max" min="0">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Требования</label>
+              <div id="requirements-editor">
+                <div class="requirement-row">
+                  <input type="text" placeholder="Навык (напр. Python)" class="req-skill">
+                  <select class="req-category">
+                    <option value="hard">Hard</option>
+                    <option value="soft">Soft</option>
+                    <option value="tool">Tool</option>
+                    <option value="language">Language</option>
+                  </select>
+                  <select class="req-priority">
+                    <option value="required">Required</option>
+                    <option value="preferred">Preferred</option>
+                    <option value="nice_to_have">Nice to have</option>
+                  </select>
+                  <button type="button" class="btn btn-sm btn-danger remove-req">✕</button>
+                </div>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline" id="add-requirement-btn">+ Добавить требование</button>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-outline" onclick="App.closeModal('vacancy-modal')">Отмена</button>
+              <button type="submit" class="btn btn-primary">Сохранить</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Matching -->
+      <div id="page-matching" class="page hidden">
+        <div class="page-header">
+          <h1>Матчинг</h1>
+        </div>
+        <div class="card">
+          <h3>Запустить матчинг</h3>
+          <form id="matching-form">
+            <div class="form-row">
+              <div class="form-group" style="flex:2">
+                <label>Вакансия *</label>
+                <select id="matching-vacancy-select" required>
+                  <option value="">Выберите вакансию...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Top K</label>
+                <input type="number" id="matching-top-k" value="20" min="1" max="100">
+              </div>
+            </div>
+            <details class="weights-details">
+              <summary>Настроить веса факторов</summary>
+              <div class="form-row" style="margin-top:0.5rem">
+                <div class="form-group">
+                  <label>Skills</label>
+                  <input type="number" id="w-skills" value="0.40" step="0.05" min="0" max="1">
+                </div>
+                <div class="form-group">
+                  <label>Experience</label>
+                  <input type="number" id="w-experience" value="0.25" step="0.05" min="0" max="1">
+                </div>
+                <div class="form-group">
+                  <label>Grade</label>
+                  <input type="number" id="w-grade" value="0.15" step="0.05" min="0" max="1">
+                </div>
+                <div class="form-group">
+                  <label>Location</label>
+                  <input type="number" id="w-location" value="0.10" step="0.05" min="0" max="1">
+                </div>
+                <div class="form-group">
+                  <label>Salary</label>
+                  <input type="number" id="w-salary" value="0.10" step="0.05" min="0" max="1">
+                </div>
+              </div>
+            </details>
+            <button type="submit" class="btn btn-primary" style="margin-top:1rem">Запустить</button>
+          </form>
+        </div>
+        <div class="card" id="matching-results-card" style="margin-top:1rem; display:none">
+          <h3>Результаты</h3>
+          <div id="matching-results-content"></div>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div id="page-search" class="page hidden">
+        <div class="page-header">
+          <h1>Поиск</h1>
+        </div>
+        <div class="card">
+          <div class="search-tabs">
+            <button class="tab-btn active" data-tab="search-candidates">Кандидаты</button>
+            <button class="tab-btn" data-tab="search-vacancies">Вакансии</button>
+            <button class="tab-btn" data-tab="search-matches">Матчи</button>
+          </div>
+          <div id="search-candidates" class="search-tab-content active">
+            <form id="search-candidates-form" class="search-form">
+              <div class="form-row">
+                <div class="form-group" style="flex:2">
+                  <input type="text" name="q" placeholder="Полнотекстовый поиск...">
+                </div>
+                <div class="form-group">
+                  <input type="text" name="skills" placeholder="Навыки (через запятую)">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <select name="grade">
+                    <option value="">Грейд</option>
+                    <option value="intern">Intern</option>
+                    <option value="junior">Junior</option>
+                    <option value="middle">Middle</option>
+                    <option value="senior">Senior</option>
+                    <option value="lead">Lead</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <input type="text" name="location" placeholder="Локация">
+                </div>
+                <div class="form-group">
+                  <input type="number" name="experience_years_min" placeholder="Опыт от">
+                </div>
+                <div class="form-group">
+                  <input type="number" name="experience_years_max" placeholder="Опыт до">
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">Найти</button>
+            </form>
+            <div id="search-candidates-results"></div>
+          </div>
+          <div id="search-vacancies" class="search-tab-content hidden">
+            <form id="search-vacancies-form" class="search-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <select name="status">
+                    <option value="">Статус</option>
+                    <option value="draft">Draft</option>
+                    <option value="open">Open</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <input type="text" name="department" placeholder="Отдел">
+                </div>
+                <div class="form-group">
+                  <input type="text" name="location" placeholder="Локация">
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">Найти</button>
+            </form>
+            <div id="search-vacancies-results"></div>
+          </div>
+          <div id="search-matches" class="search-tab-content hidden">
+            <form id="search-matches-form" class="search-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <input type="text" name="vacancy_id" placeholder="ID вакансии">
+                </div>
+                <div class="form-group">
+                  <input type="number" name="min_score" placeholder="Мин. score" min="0" max="100">
+                </div>
+                <div class="form-group">
+                  <select name="grade">
+                    <option value="">Грейд</option>
+                    <option value="intern">Intern</option>
+                    <option value="junior">Junior</option>
+                    <option value="middle">Middle</option>
+                    <option value="senior">Senior</option>
+                    <option value="lead">Lead</option>
+                  </select>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">Найти</button>
+            </form>
+            <div id="search-matches-results"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Integrations -->
+      <div id="page-integrations" class="page hidden">
+        <div class="page-header">
+          <h1>Интеграции (API-ключи)</h1>
+          <button class="btn btn-primary" onclick="App.showCreateKey()">+ Создать ключ</button>
+        </div>
+        <div class="card">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Название</th>
+                  <th>Разрешения</th>
+                  <th>Создан</th>
+                  <th>Активен</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="keys-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create Key modal -->
+      <div id="key-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content modal-sm">
+          <div class="modal-header">
+            <h2>Создать API-ключ</h2>
+            <button class="modal-close" onclick="App.closeModal('key-modal')">&times;</button>
+          </div>
+          <form id="key-form">
+            <div class="form-group">
+              <label>Название *</label>
+              <input type="text" name="name" required placeholder="Telegram Bot">
+            </div>
+            <div class="form-group">
+              <label>Разрешения</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" name="permissions" value="resumes:upload" checked> resumes:upload</label>
+                <label><input type="checkbox" name="permissions" value="candidates:read"> candidates:read</label>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-outline" onclick="App.closeModal('key-modal')">Отмена</button>
+              <button type="submit" class="btn btn-primary">Создать</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Key created modal -->
+      <div id="key-created-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content modal-sm">
+          <div class="modal-header">
+            <h2>Ключ создан</h2>
+          </div>
+          <div class="key-created-body">
+            <p class="text-warning">Скопируйте ключ — он больше не будет показан!</p>
+            <div class="key-display">
+              <code id="created-key-value"></code>
+              <button class="btn btn-sm btn-outline" onclick="App.copyKey()">Копировать</button>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="App.closeModal('key-created-modal')">Закрыть</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toast-container"></div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/pages/dashboard.js"></script>
+  <script src="/js/pages/upload.js"></script>
+  <script src="/js/pages/candidates.js"></script>
+  <script src="/js/pages/vacancies.js"></script>
+  <script src="/js/pages/matching.js"></script>
+  <script src="/js/pages/search.js"></script>
+  <script src="/js/pages/integrations.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
