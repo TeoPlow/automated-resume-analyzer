@@ -110,11 +110,14 @@ const VacanciesPage = (() => {
   function getStatusActions(status, vacancyId) {
     const actions = [];
     if (status === 'draft') {
-      actions.push(`<button class="btn btn-sm btn-success" onclick="VacanciesPage.changeStatus('${vacancyId}','open')">Открыть</button>`);
+      actions.push(`<button class="btn btn-sm btn-success" onclick="VacanciesPage.changeStatus('${vacancyId}','open')">→ Open</button>`);
     } else if (status === 'open') {
-      actions.push(`<button class="btn btn-sm btn-danger" onclick="VacanciesPage.changeStatus('${vacancyId}','closed')">Закрыть</button>`);
+      actions.push(`<button class="btn btn-sm btn-danger" onclick="VacanciesPage.changeStatus('${vacancyId}','closed')">→ Closed</button>`);
     } else if (status === 'closed') {
-      actions.push(`<button class="btn btn-sm btn-outline" onclick="VacanciesPage.changeStatus('${vacancyId}','archived')">В архив</button>`);
+      actions.push(`<button class="btn btn-sm btn-success" onclick="VacanciesPage.changeStatus('${vacancyId}','open')">→ Open</button>`);
+      actions.push(`<button class="btn btn-sm btn-outline" onclick="VacanciesPage.changeStatus('${vacancyId}','archived')">→ Archived</button>`);
+    } else if (status === 'archived') {
+      actions.push(`<button class="btn btn-sm btn-outline" onclick="VacanciesPage.changeStatus('${vacancyId}','draft')">→ Draft</button>`);
     }
     return actions.join('');
   }
@@ -123,7 +126,13 @@ const VacanciesPage = (() => {
     try {
       await API.patch(`/vacancies/${vacancyId}`, { status: newStatus });
       App.toast(`Статус изменён на ${newStatus}`, 'success');
-      await showDetail(vacancyId);
+      // Refresh current view
+      const detailPage = document.getElementById('page-vacancy-detail');
+      if (detailPage && detailPage.classList.contains('active')) {
+        await showDetail(vacancyId);
+      } else {
+        await fetchList();
+      }
     } catch (e) {
       App.toast(e.message, 'error');
     }

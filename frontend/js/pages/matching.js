@@ -9,7 +9,7 @@ const MatchingPage = (() => {
   async function loadVacancySelect() {
     const select = document.getElementById('matching-vacancy-select');
     try {
-      const data = await API.get('/search/vacancies', { status: 'open', limit: 100 });
+      const data = await API.get('/search/vacancies', { limit: 100 });
       const vacancies = data.data || [];
       select.innerHTML = '<option value="">Выберите вакансию...</option>' +
         vacancies.map(v => `<option value="${v.id}">${escapeHtml(v.title)} (${v.status})</option>`).join('');
