@@ -494,7 +494,7 @@ class AuthService:
         return await self.create_integration_key(old_key.name, old_key.permissions)
 
     async def revoke_integration_key(self, key_id: str) -> None:
-        """Отозвать (деактивировать) интеграционный ключ."""
+        """Отозвать (деактивировать) интеграционный ключ"""
         deleted = await self._store.delete_integration_key(key_id)
         if not deleted:
             raise AppError(
@@ -508,10 +508,8 @@ class AuthService:
         """Освободить внешние ресурсы AuthService."""
         await self._store.close()
 
-    # --- Приватные методы ---
-
     def _build_user_registry(self) -> dict[str, HRUser]:
-        """Создать реестр пользователей из конфигурации."""
+        """Создать реестр пользователей из конфигурации"""
         all_permissions = [
             "resumes:upload",
             "candidates:read",
@@ -540,7 +538,7 @@ class AuthService:
         }
 
     def _issue_tokens(self, user: HRUser) -> TokenPairData:
-        """Выпустить пару access + refresh токенов для пользователя."""
+        """Выпустить пару access + refresh токенов для пользователя"""
         access = self._jwt.create_access_token(
             actor_id=user.username,
             actor_type=user.actor_type,
@@ -550,7 +548,7 @@ class AuthService:
         return TokenPairData(access_token=access, refresh_token=refresh)
 
     def _resolve_refresh_blacklist_ttl(self, payload: dict) -> int:
-        """Рассчитать TTL blacklist по реальному сроку жизни refresh-токена."""
+        """Рассчитать TTL blacklist по реальному сроку жизни refresh-токена"""
         exp = payload.get("exp")
         if not isinstance(exp, int):
             return max(self._config.JWT_REFRESH_TTL, 1)

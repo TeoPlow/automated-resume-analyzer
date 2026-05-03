@@ -25,14 +25,7 @@ HOP_BY_HOP_HEADERS = frozenset(
 
 
 class ProxyService:
-    """Проксирует HTTP-запросы во внутренние микросервисы.
-
-    Маппинг URL-префиксов на сервисы:
-    - /profiles/* → Profile service
-    - /vacancies/* → Vacancy service
-    - /matching/* → Matching service
-    - /search/* → Search service
-    """
+    """Проксирует HTTP-запросы во внутренние микросервисы"""
 
     SERVICE_MAP: dict[str, str] = {
         "profiles": "profile",
@@ -58,7 +51,7 @@ class ProxyService:
         path: str,
         actor: MeData,
     ) -> Response:
-        """Переслать запрос в downstream-сервис с обогащением заголовков."""
+        """Переслать запрос в микросервис с обогащением заголовков"""
         service_name = self._resolve_service(service_key)
         base_url = self._urls[service_name]
         target_url = f"{base_url}/api/v1/{service_key}"
@@ -110,11 +103,11 @@ class ProxyService:
         )
 
     async def close(self) -> None:
-        """Закрыть HTTP-клиент."""
+        """Закрыть HTTP-клиент"""
         await self._client.aclose()
 
     def _resolve_service(self, service_key: str) -> str:
-        """Определить имя сервиса по ключу из URL."""
+        """Определить имя сервиса по ключу из URL"""
         service = self.SERVICE_MAP.get(service_key)
         if not service:
             raise AppError(
@@ -125,7 +118,7 @@ class ProxyService:
         return service
 
     def _build_headers(self, request: Request, actor: MeData) -> dict[str, str]:
-        """Собрать заголовки для downstream-запроса с данными актора."""
+        """Собрать заголовки для запроса с данными актора"""
         headers: dict[str, str] = {}
 
         for key, value in request.headers.items():

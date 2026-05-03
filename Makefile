@@ -8,7 +8,7 @@ else
 VENV_PYTHON := $(VENV_DIR)/bin/python
 endif
 
-.PHONY: start run demo seed-demo clean down test install-requirements format check help
+.PHONY: start run demo seed-demo clean down test coverage install-requirements format check help
 
 help:
 	@echo "Available targets:"
@@ -20,6 +20,7 @@ help:
 	@echo "  make clean                - stop stack and remove volumes"
 	@echo "  make down                 - stop stack without removing volumes"
 	@echo "  make test                 - run pytest using .venv"
+	@echo "  make coverage             - run pytest with coverage report"
 	@echo "  make format               - format code with black"
 	@echo "  make check                - check code style against PEP8 (pycodestyle)"
 
@@ -58,6 +59,9 @@ down:
 
 test: install-requirements
 	$(VENV_PYTHON) -m pytest -q
+
+coverage: install-requirements
+	$(VENV_PYTHON) -m pytest -q --cov=. --cov-report=term-missing
 
 format: install-requirements
 	$(VENV_PYTHON) -m black .

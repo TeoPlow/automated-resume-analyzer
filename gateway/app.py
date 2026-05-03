@@ -74,7 +74,7 @@ proxy_service = ProxyService(config=config)
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
-    """Жизненный цикл приложения: инициализация и завершение ресурсов."""
+    """Жизненный цикл приложения: инициализация и завершение ресурсов"""
     logger.info("Gateway запущен на порту 8000")
     yield
     await auth_service.close()

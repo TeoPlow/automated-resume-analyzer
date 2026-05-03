@@ -9,7 +9,7 @@ from common.exceptions import AppError
 
 
 class JwtService:
-    """Создание и валидация JWT-токенов с алгоритмом HS256."""
+    """Создание и валидация JWT-токенов с алгоритмом HS256"""
 
     def __init__(self, secret: str, access_ttl: int, refresh_ttl: int) -> None:
         self._secret = secret.encode()
@@ -22,7 +22,7 @@ class JwtService:
         actor_type: str,
         permissions: list[str],
     ) -> str:
-        """Создать access-токен с данными актора."""
+        """Создать access-токен с данными актора"""
         now = int(time.time())
         payload = {
             "sub": actor_id,
@@ -35,7 +35,7 @@ class JwtService:
         return self._encode(payload)
 
     def create_refresh_token(self, actor_id: str) -> tuple[str, str]:
-        """Создать refresh-токен. Возвращает кортеж (токен, jti)."""
+        """Создать refresh-токен. Возвращает кортеж (токен, jti)"""
         now = int(time.time())
         jti = str(uuid.uuid4())
         payload = {
@@ -48,7 +48,7 @@ class JwtService:
         return self._encode(payload), jti
 
     def decode(self, token: str) -> dict:
-        """Декодировать и валидировать JWT-токен. Выбрасывает AppError."""
+        """Декодировать и валидировать JWT-токен. Выбрасывает AppError"""
         parts = token.split(".")
         if len(parts) != 3:
             raise AppError(
@@ -79,7 +79,7 @@ class JwtService:
         return payload
 
     def _encode(self, payload: dict) -> str:
-        """Собрать JWT-строку из payload."""
+        """Собрать JWT-строку из payload"""
         header = {"alg": "HS256", "typ": "JWT"}
         header_seg = self._base64url_encode(json.dumps(header).encode())
         payload_seg = self._base64url_encode(json.dumps(payload).encode())
@@ -87,16 +87,16 @@ class JwtService:
         return f"{header_seg}.{payload_seg}.{signature}"
 
     def _sign(self, data: str) -> str:
-        """Создать HMAC-SHA256 подпись и вернуть base64url-строку."""
+        """Создать HMAC-SHA256 подпись и вернуть base64url-строку"""
         sig = hmac.new(self._secret, data.encode(), hashlib.sha256).digest()
         return self._base64url_encode(sig)
 
     def _base64url_encode(self, data: bytes) -> str:
-        """Base64url кодирование без паддинга (RFC 7515)."""
+        """Base64url кодирование без паддинга"""
         return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
 
     def _base64url_decode(self, data: str) -> bytes:
-        """Base64url декодирование с восстановлением паддинга."""
+        """Base64url декодирование с восстановлением паддинга"""
         padding = 4 - len(data) % 4
         if padding != 4:
             data += "=" * padding

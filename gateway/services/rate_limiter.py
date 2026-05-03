@@ -10,11 +10,7 @@ logger = setup_logger("gateway.rate_limiter")
 
 
 class SlidingWindowRateLimiter:
-    """Ограничитель частоты запросов по алгоритму скользящего окна.
-
-    Хранит временные метки запросов в deque для каждого клиента.
-    Запросы старше window_seconds автоматически удаляются.
-    """
+    """Ограничитель частоты запросов по алгоритму скользящего окна"""
 
     def __init__(self, max_requests: int, window_seconds: int) -> None:
         self._max_requests = max_requests
@@ -22,7 +18,7 @@ class SlidingWindowRateLimiter:
         self._windows: dict[str, deque[float]] = {}
 
     async def check(self, client_key: str) -> bool:
-        """Проверить, допустим ли запрос. True — допустим, False — лимит превышен."""
+        """Проверить, допустим ли запрос. True — допустим, False — лимит превышен"""
         now = time.time()
         window = self._windows.setdefault(client_key, deque())
 
@@ -43,7 +39,7 @@ class SlidingWindowRateLimiter:
         return True
 
     def extract_client_key(self, request: Request) -> str:
-        """Извлечь уникальный ключ клиента из запроса для rate limiting."""
+        """Извлечь уникальный ключ клиента из запроса для rate limiting"""
         api_key = request.headers.get("x-api-key")
         if api_key:
             return f"apikey:{hashlib.sha256(api_key.encode()).hexdigest()[:16]}"
