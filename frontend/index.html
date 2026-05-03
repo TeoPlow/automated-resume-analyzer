@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Resume Analyzer — HR Platform</title>
-  <link rel="stylesheet" href="/css/style.css">
-  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/style.css?v=20260427">
+  <link rel="stylesheet" href="/css/components.css?v=20260427">
 </head>
 <body>
   <div id="app">
@@ -198,10 +198,10 @@
           <div class="table-toolbar">
             <select id="vacancies-status-filter" class="filter-select">
               <option value="">Все статусы</option>
-              <option value="draft">Draft</option>
-              <option value="open">Open</option>
-              <option value="closed">Closed</option>
-              <option value="archived">Archived</option>
+              <option value="draft">Черновик</option>
+              <option value="open">Открыта</option>
+              <option value="closed">Закрыта</option>
+              <option value="archived">Архив</option>
             </select>
           </div>
           <div class="table-responsive">
@@ -342,23 +342,23 @@
               <summary>Настроить веса факторов</summary>
               <div class="form-row" style="margin-top:0.5rem">
                 <div class="form-group">
-                  <label>Skills</label>
+                  <label>Навыки</label>
                   <input type="number" id="w-skills" value="0.40" step="0.05" min="0" max="1">
                 </div>
                 <div class="form-group">
-                  <label>Experience</label>
+                  <label>Опыт</label>
                   <input type="number" id="w-experience" value="0.25" step="0.05" min="0" max="1">
                 </div>
                 <div class="form-group">
-                  <label>Grade</label>
+                  <label>Грейд</label>
                   <input type="number" id="w-grade" value="0.15" step="0.05" min="0" max="1">
                 </div>
                 <div class="form-group">
-                  <label>Location</label>
+                  <label>Локация</label>
                   <input type="number" id="w-location" value="0.10" step="0.05" min="0" max="1">
                 </div>
                 <div class="form-group">
-                  <label>Salary</label>
+                  <label>Зарплата</label>
                   <input type="number" id="w-salary" value="0.10" step="0.05" min="0" max="1">
                 </div>
               </div>
@@ -424,9 +424,9 @@
                 <div class="form-group">
                   <select name="status">
                     <option value="">Статус</option>
-                    <option value="draft">Draft</option>
-                    <option value="open">Open</option>
-                    <option value="closed">Closed</option>
+                    <option value="draft">Черновик</option>
+                    <option value="open">Открыта</option>
+                    <option value="closed">Закрыта</option>
                   </select>
                 </div>
                 <div class="form-group">
@@ -544,15 +544,15 @@
   <!-- Toast notifications -->
   <div id="toast-container"></div>
 
-  <script src="/js/api.js"></script>
-  <script src="/js/auth.js"></script>
-  <script src="/js/pages/dashboard.js"></script>
-  <script src="/js/pages/upload.js"></script>
-  <script src="/js/pages/candidates.js"></script>
-  <script src="/js/pages/vacancies.js"></script>
-  <script src="/js/pages/matching.js"></script>
-  <script src="/js/pages/search.js"></script>
-  <script src="/js/pages/integrations.js"></script>
-  <script src="/js/app.js"></script>
+  <script src="/js/api.js?v=20260427"></script>
+  <script src="/js/auth.js?v=20260427"></script>
+  <script src="/js/pages/dashboard.js?v=20260427"></script>
+  <script src="/js/pages/upload.js?v=20260427"></script>
+  <script src="/js/pages/candidates.js?v=20260427"></script>
+  <script src="/js/pages/vacancies.js?v=20260427"></script>
+  <script src="/js/pages/matching.js?v=20260427"></script>
+  <script src="/js/pages/search.js?v=20260427"></script>
+  <script src="/js/pages/integrations.js?v=20260427"></script>
+  <script src="/js/app.js?v=20260427"></script>
 </body>
 </html>

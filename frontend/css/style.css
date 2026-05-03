@@ -492,6 +492,10 @@ form .form-group + .form-group { margin-top: 0.75rem; }
 /* ========== Upload / Drop Zone ========== */
 .upload-card { max-width: 600px; }
 
+.upload-card #upload-btn {
+  margin-top: 0.75rem;
+}
+
 .drop-zone {
   border: 2px dashed var(--gray-300);
   border-radius: var(--radius-lg);

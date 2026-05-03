@@ -43,6 +43,21 @@ class MatchingService:
         vacancy_id = _parse_uuid(body.vacancy_id)
         weights = self._resolve_weights(body.weights)
 
+        if self._can_reuse_latest_run(body):
+            existing_run = await repo.get_latest_completed_run_by_vacancy(
+                vacancy_id
+            )
+            if existing_run:
+                logger.info(
+                    "Использован существующий run=%s для vacancy=%s",
+                    existing_run.id,
+                    vacancy_id,
+                )
+                return MatchRunData(
+                    run_id=str(existing_run.id),
+                    status=existing_run.status,
+                )
+
         run = await repo.create_run(
             vacancy_id=vacancy_id,
             config={"weights": weights},
@@ -122,7 +137,7 @@ class MatchingService:
         """Получить результаты по ID запуска."""
         uid = _parse_uuid(run_id)
         results = await repo.get_results_by_run(uid)
-        return [_to_result_data(r) for r in results]
+        return await self._to_result_data_list(results)
 
     async def get_vacancy_results(
         self, vacancy_id: str, repo: MatchingRepository
@@ -130,7 +145,7 @@ class MatchingService:
         """Получить лучших кандидатов по последнему запуску для вакансии."""
         uid = _parse_uuid(vacancy_id)
         results = await repo.get_latest_results_by_vacancy(uid)
-        return [_to_result_data(r) for r in results]
+        return await self._to_result_data_list(results)
 
     async def get_candidate_vacancies(
         self, candidate_id: str, repo: MatchingRepository
@@ -138,7 +153,62 @@ class MatchingService:
         """Получить подходящие вакансии для кандидата."""
         uid = _parse_uuid(candidate_id)
         results = await repo.get_results_by_candidate(uid)
-        return [_to_result_data(r) for r in results]
+        return await self._to_result_data_list(results)
+
+    async def _to_result_data_list(
+        self, results: list
+    ) -> list[MatchResultData]:
+        """Обогатить результаты именем кандидата и названием вакансии."""
+        if not results:
+            return []
+
+        candidate_names = await self._load_candidate_names(results)
+        vacancy_titles = await self._load_vacancy_titles(results)
+
+        return [
+            _to_result_data(
+                r,
+                candidate_name=candidate_names.get(str(r.candidate_id)),
+                vacancy_title=vacancy_titles.get(str(r.vacancy_id)),
+            )
+            for r in results
+        ]
+
+    async def _load_candidate_names(self, results: list) -> dict[str, str]:
+        """Загрузить ФИО кандидатов по списку результатов."""
+        candidate_ids = sorted({str(r.candidate_id) for r in results})
+        if not candidate_ids:
+            return {}
+
+        try:
+            candidates = await self._client.get_candidates_bulk(candidate_ids)
+        except Exception as exc:
+            logger.warning("Не удалось загрузить кандидатов для обогащения: %s", exc)
+            return {}
+
+        return {
+            c["id"]: c.get("full_name")
+            for c in candidates
+            if c.get("id") and c.get("full_name")
+        }
+
+    async def _load_vacancy_titles(self, results: list) -> dict[str, str]:
+        """Загрузить названия вакансий по списку результатов."""
+        vacancy_ids = sorted({str(r.vacancy_id) for r in results})
+        if not vacancy_ids:
+            return {}
+
+        try:
+            vacancies = await self._client.get_vacancies_bulk(vacancy_ids)
+        except Exception as exc:
+            logger.warning("Не удалось загрузить вакансии для обогащения: %s", exc)
+            return {}
+
+        return {
+            v["id"]: v.get("title")
+            for v in vacancies
+            if v.get("id") and v.get("title")
+        }
 
     def _resolve_weights(
         self, weights: MatchWeights | None
@@ -158,9 +228,19 @@ class MatchingService:
         self, body: MatchRunRequest
     ) -> list[dict]:
         """Загрузить кандидатов для скоринга."""
-        if body.candidate_ids:
+        if body.candidate_ids is not None:
             return await self._client.get_candidates_bulk(body.candidate_ids)
-        return await self._client.get_candidates_bulk([])
+        return await self._client.get_active_candidates()
+
+    @staticmethod
+    def _can_reuse_latest_run(body: MatchRunRequest) -> bool:
+        """Проверить, можно ли переиспользовать существующий completed run."""
+        return (
+            not body.force_recompute
+            and body.candidate_ids is None
+            and body.top_k is None
+            and body.weights is None
+        )
 
 
 def _parse_uuid(value: str) -> uuid.UUID:
@@ -174,7 +254,12 @@ def _parse_uuid(value: str) -> uuid.UUID:
             status_code=400,
         )
 
-def _to_result_data(result) -> MatchResultData:
+
+def _to_result_data(
+    result,
+    candidate_name: str | None = None,
+    vacancy_title: str | None = None,
+) -> MatchResultData:
     """Преобразовать ORM-модель результата в Pydantic-схему."""
     explanations = []
     for e in (result.explanations or []):
@@ -190,7 +275,9 @@ def _to_result_data(result) -> MatchResultData:
     return MatchResultData(
         id=str(result.id),
         candidate_id=str(result.candidate_id),
+        candidate_name=candidate_name,
         vacancy_id=str(result.vacancy_id),
+        vacancy_title=vacancy_title,
         final_score=float(result.final_score),
         skill_score=float(result.skill_score),
         experience_score=float(result.experience_score),

@@ -3,6 +3,7 @@
  */
 const UploadPage = (() => {
   let selectedFile = null;
+  let pollToken = 0;
 
   function init() {
     const dropZone = document.getElementById('drop-zone');
@@ -72,20 +73,26 @@ const UploadPage = (() => {
           <div class="info-grid" style="margin-top:0.5rem">
             <div class="info-item">
               <span class="info-label">Resume ID</span>
-              <span class="info-value">${data.data.resume_id}</span>
+              <span class="info-value" id="upload-resume-id">${data.data.resume_id}</span>
             </div>
             <div class="info-item">
               <span class="info-label">Candidate ID</span>
-              <span class="info-value">${data.data.candidate_id || '—'}</span>
+              <span class="info-value" id="upload-candidate-id">${data.data.candidate_id || '—'}</span>
             </div>
             <div class="info-item">
               <span class="info-label">Статус</span>
-              <span class="info-value"><span class="badge badge-info">${data.data.status}</span></span>
+              <span class="info-value" id="upload-status"><span class="badge ${statusBadge(data.data.status)}">${data.data.status}</span></span>
             </div>
           </div>
         </div>`;
 
       App.toast('Резюме успешно загружено', 'success');
+
+      if (!data.data.candidate_id) {
+        const currentPollToken = ++pollToken;
+        void pollResumeStatus(data.data.resume_id, currentPollToken);
+      }
+
       // Reset
       selectedFile = null;
       document.querySelector('.drop-zone-content p').textContent = 'Перетащите файл сюда или нажмите для выбора';
@@ -94,6 +101,44 @@ const UploadPage = (() => {
     } finally {
       btn.disabled = false;
       btn.textContent = 'Загрузить';
+    }
+  }
+
+  async function pollResumeStatus(resumeId, currentPollToken) {
+    const maxAttempts = 45;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      if (currentPollToken !== pollToken) return;
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      if (currentPollToken !== pollToken) return;
+
+      try {
+        const response = await API.get(`/profiles/resumes/${resumeId}`);
+        const statusData = response?.data;
+        if (!statusData) continue;
+
+        const statusEl = document.getElementById('upload-status');
+        const candidateEl = document.getElementById('upload-candidate-id');
+        if (!statusEl || !candidateEl) return;
+
+        statusEl.innerHTML = `<span class="badge ${statusBadge(statusData.status)}">${statusData.status}</span>`;
+        candidateEl.textContent = statusData.candidate_id || '—';
+
+        if (statusData.status === 'failed') {
+          const detail = statusData.error_detail ? `: ${statusData.error_detail}` : '';
+          App.toast(`Ошибка обработки резюме${detail}`, 'error');
+          return;
+        }
+
+        if (statusData.candidate_id && statusData.status === 'parsed') {
+          App.toast('Резюме обработано, Candidate ID назначен', 'success');
+          return;
+        }
+      } catch {
+        return;
+      }
     }
   }
 

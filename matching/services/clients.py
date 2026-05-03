@@ -37,6 +37,24 @@ class ServiceClient:
         response.raise_for_status()
         return response.json()["data"]
 
+    async def get_vacancies_bulk(self, vacancy_ids: list[str]) -> list[dict]:
+        """Получить вакансии через внутренний API Vacancy-сервиса."""
+        url = f"{self._vacancy_url}/internal/v1/vacancies/bulk-get"
+        response = await self._client.post(
+            url,
+            json={"vacancy_ids": vacancy_ids},
+            headers=self._headers,
+        )
+        response.raise_for_status()
+        return response.json()["data"]
+
+    async def get_active_candidates(self) -> list[dict]:
+        """Получить всех активных кандидатов с профилем."""
+        url = f"{self._profile_url}/internal/v1/candidates/active"
+        response = await self._client.get(url, headers=self._headers)
+        response.raise_for_status()
+        return response.json()["data"]
+
     async def get_candidate(self, candidate_id: str) -> dict:
         """Получить одного кандидата через внутренний API Profile-сервиса."""
         url = f"{self._profile_url}/internal/v1/candidates/{candidate_id}"

@@ -38,6 +38,16 @@ def require_permission(actor: Actor, permission: str) -> None:
         )
 
 
+def require_admin(actor: Actor) -> None:
+    """Проверить, что актор является администратором системы."""
+    if "integrations:manage" not in actor.permissions:
+        raise AppError(
+            code="forbidden",
+            message="Требуются права администратора",
+            status_code=403,
+        )
+
+
 def require_internal(request: Request, expected_token: str) -> None:
     """Проверить X-Internal-Token для межсервисных вызовов."""
     token = request.headers.get("x-internal-token", "")

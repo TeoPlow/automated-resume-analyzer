@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, Request
 
 from common.auth import require_internal
@@ -15,9 +17,24 @@ def create_router(config: ProfileConfig, db: Database) -> APIRouter:
     """Создать роутер для внутреннего API (защищён X-Internal-Token)."""
     router = APIRouter(prefix="/internal/v1", tags=["internal"])
 
-    @router.get("/candidates/{candidate_id}")
+    @router.get("/candidates/active")
+    async def get_active_candidates(
+        request: Request,
+    ) -> BaseResponse[list[CandidateData]]:
+        """Получить всех кандидатов с готовым агрегированным профилем."""
+        require_internal(request, config.INTERNAL_TOKEN)
+
+        async with db.session() as session:
+            repo = ProfileRepository(session)
+            candidates = await repo.get_active_candidates()
+
+        return BaseResponse(
+            data=[_to_candidate_data(c) for c in candidates]
+        )
+
+    @router.get("/candidates/{candidate_id:uuid}")
     async def get_candidate_internal(
-        candidate_id: str,
+        candidate_id: uuid.UUID,
         request: Request,
     ) -> BaseResponse[CandidateData]:
         """Получить кандидата по ID (внутренний вызов)."""
@@ -25,9 +42,7 @@ def create_router(config: ProfileConfig, db: Database) -> APIRouter:
 
         async with db.session() as session:
             repo = ProfileRepository(session)
-            candidate = await repo.get_candidate(
-                _parse_uuid(candidate_id)
-            )
+            candidate = await repo.get_candidate(candidate_id)
 
         if not candidate:
             raise AppError(
@@ -62,20 +77,6 @@ def create_router(config: ProfileConfig, db: Database) -> APIRouter:
 
 
 # --- Приватные функции ---
-
-
-def _parse_uuid(value: str):
-    """Преобразовать строку в UUID."""
-    import uuid
-
-    try:
-        return uuid.UUID(value)
-    except ValueError:
-        raise AppError(
-            code="invalid_id",
-            message="Некорректный формат ID",
-            status_code=400,
-        )
 
 
 def _to_candidate_data(candidate) -> CandidateData:

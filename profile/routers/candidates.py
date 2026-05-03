@@ -1,6 +1,11 @@
 from fastapi import APIRouter, Depends
 
-from common.auth import Actor, extract_actor, require_permission
+from common.auth import (
+    Actor,
+    extract_actor,
+    require_admin,
+    require_permission,
+)
 from common.exceptions import AppError
 from common.schemas.base import BaseResponse
 
@@ -87,6 +92,26 @@ def create_router(db: Database) -> APIRouter:
         return BaseResponse(
             data=[_to_resume_data(r) for r in resumes]
         )
+
+    @router.delete("/{candidate_id}", status_code=204)
+    async def delete_candidate(
+        candidate_id: str,
+        actor: Actor = Depends(extract_actor),
+    ) -> None:
+        """Удалить кандидата (только администратор)."""
+        require_permission(actor, "candidates:write")
+        require_admin(actor)
+
+        async with db.session() as session:
+            repo = ProfileRepository(session)
+            deleted = await repo.delete_candidate(_parse_uuid(candidate_id))
+            if not deleted:
+                raise AppError(
+                    code="not_found",
+                    message="Кандидат не найден",
+                    status_code=404,
+                )
+            await repo.commit()
 
     return router
 

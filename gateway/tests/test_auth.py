@@ -175,7 +175,7 @@ class TestLogout:
 class TestHealthcheck:
 
     async def test_health_returns_service_name(self, client):
-        response = await client.get("/health")
+        response = await client.get("/api/v1/health")
 
         assert response.status_code == 200
         data = response.json()["data"]

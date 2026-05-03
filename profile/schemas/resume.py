@@ -11,6 +11,15 @@ class ResumeUploadData(BaseModel):
     status: str = "uploaded"
 
 
+class ResumeStatusData(BaseModel):
+    """Текущее состояние обработки резюме."""
+
+    resume_id: str
+    candidate_id: str | None = None
+    status: str
+    error_detail: str | None = None
+
+
 class ParsedContacts(BaseModel):
     """Контактные данные, извлечённые из резюме."""
 

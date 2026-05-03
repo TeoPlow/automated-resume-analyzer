@@ -168,6 +168,18 @@ class VacancyService:
         )
         return [_to_vacancy_data(v) for v in vacancies], total
 
+    async def delete(self, vacancy_id: str, repo: VacancyRepository) -> None:
+        """Удалить вакансию по ID."""
+        deleted = await repo.delete(_parse_uuid(vacancy_id))
+        if not deleted:
+            raise AppError(
+                code="not_found",
+                message="Вакансия не найдена",
+                status_code=404,
+            )
+        await repo.commit()
+        logger.info("Вакансия удалена: %s", vacancy_id)
+
 
 def _parse_uuid(value: str) -> uuid.UUID:
     """Преобразовать строку в UUID."""

@@ -7,9 +7,14 @@ const SearchPage = (() => {
     document.querySelectorAll('.search-tabs .tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.search-tabs .tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.search-tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.search-tab-content').forEach(t => {
+          t.classList.remove('active');
+          t.classList.add('hidden');
+        });
         btn.classList.add('active');
-        document.getElementById(btn.dataset.tab).classList.add('active');
+        const targetTab = document.getElementById(btn.dataset.tab);
+        targetTab.classList.remove('hidden');
+        targetTab.classList.add('active');
       });
     });
 

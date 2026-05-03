@@ -114,6 +114,15 @@ class MatchingRepository:
         self, vacancy_id: uuid.UUID
     ) -> list[MatchResult]:
         """Получить результаты последнего завершённого запуска для вакансии."""
+        run = await self.get_latest_completed_run_by_vacancy(vacancy_id)
+        if not run:
+            return []
+        return await self.get_results_by_run(run.id)
+
+    async def get_latest_completed_run_by_vacancy(
+        self, vacancy_id: uuid.UUID
+    ) -> MatchRun | None:
+        """Получить последний завершённый запуск матчинга для вакансии."""
         run_stmt = (
             select(MatchRun)
             .where(
@@ -124,10 +133,7 @@ class MatchingRepository:
             .limit(1)
         )
         run_result = await self._session.execute(run_stmt)
-        run = run_result.scalar_one_or_none()
-        if not run:
-            return []
-        return await self.get_results_by_run(run.id)
+        return run_result.scalar_one_or_none()
 
     async def get_results_by_candidate(
         self, candidate_id: uuid.UUID

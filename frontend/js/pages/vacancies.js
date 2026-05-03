@@ -44,6 +44,7 @@ const VacanciesPage = (() => {
         <td><span class="badge ${statusBadgeVacancy(v.status)}">${v.status}</span></td>
         <td class="actions">
           <button class="btn btn-sm btn-outline" onclick="VacanciesPage.showDetail('${v.id}')">Открыть</button>
+          ${Auth.isAdmin() ? `<button class="btn btn-sm btn-danger" onclick="VacanciesPage.deleteVacancy('${v.id}')">Удалить</button>` : ''}
         </td>
       </tr>
     `).join('');
@@ -76,6 +77,7 @@ const VacanciesPage = (() => {
         <div style="margin-top:1rem;display:flex;gap:0.5rem">
           ${statusActions}
           <button class="btn btn-sm btn-outline" onclick="VacanciesPage.editVacancy('${vacancyId}')">Редактировать</button>
+          ${Auth.isAdmin() ? `<button class="btn btn-sm btn-danger" onclick="VacanciesPage.deleteVacancy('${vacancyId}', true)">Удалить</button>` : ''}
         </div>`;
 
       // Requirements
@@ -167,6 +169,25 @@ const VacanciesPage = (() => {
     } finally {
       btn.disabled = false;
       btn.textContent = 'Запустить матчинг';
+    }
+  }
+
+  async function deleteVacancy(vacancyId, fromDetail = false) {
+    if (!Auth.isAdmin()) {
+      App.toast('Удаление доступно только администратору', 'warning');
+      return;
+    }
+    if (!confirm('Удалить вакансию? Это действие необратимо.')) return;
+
+    try {
+      await API.del(`/vacancies/${vacancyId}`);
+      App.toast('Вакансия удалена', 'success');
+      if (fromDetail) {
+        App.navigate('vacancies');
+      }
+      await fetchList();
+    } catch (e) {
+      App.toast(e.message, 'error');
     }
   }
 
@@ -285,5 +306,13 @@ const VacanciesPage = (() => {
     document.getElementById('add-requirement-btn').addEventListener('click', addRequirementRow);
   }
 
-  return { load, init, showDetail, showCreateForm, editVacancy, changeStatus };
+  return {
+    load,
+    init,
+    showDetail,
+    showCreateForm,
+    editVacancy,
+    changeStatus,
+    deleteVacancy,
+  };
 })();

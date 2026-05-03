@@ -17,6 +17,11 @@ class GatewayConfig:
 
     # Redis
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://redis:6379/0")
+    REDIS_KEY_PREFIX: str = os.getenv("REDIS_KEY_PREFIX", "gateway")
+    AUTH_STORE_BACKEND: str = os.getenv("AUTH_STORE_BACKEND", "auto")
+    INTEGRATION_KEY_TTL: int = int(
+        os.getenv("INTEGRATION_KEY_TTL", str(30 * 24 * 60 * 60))
+    )
 
     # Пользователи (для MVP — из env, в продакшене — из БД)
     ADMIN_USERNAME: str = os.getenv("ADMIN_USERNAME", "admin")

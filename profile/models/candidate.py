@@ -46,7 +46,11 @@ class Candidate(Base):
         back_populates="candidate", lazy="selectin"
     )
     profile: Mapped["CandidateProfile | None"] = relationship(
-        back_populates="candidate", uselist=False, lazy="selectin"
+        back_populates="candidate",
+        uselist=False,
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        single_parent=True,
     )
 
 
@@ -92,7 +96,7 @@ class CandidateProfile(Base):
     )
     candidate_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("candidates.id"),
+        ForeignKey("candidates.id", ondelete="CASCADE"),
         nullable=False,
     )
     data: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)

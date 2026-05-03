@@ -45,6 +45,7 @@ const CandidatesPage = (() => {
         <td>${escapeHtml(c.location || '—')}</td>
         <td class="actions">
           <button class="btn btn-sm btn-outline" onclick="CandidatesPage.showDetail('${c.id}')">Открыть</button>
+          ${Auth.isAdmin() ? `<button class="btn btn-sm btn-danger" onclick="CandidatesPage.deleteCandidate('${c.id}')">Удалить</button>` : ''}
         </td>
       </tr>
     `).join('');
@@ -75,7 +76,8 @@ const CandidatesPage = (() => {
         <div style="margin-top:1rem">
           <span class="info-label">Навыки</span>
           <div style="margin-top:0.25rem">${(profile.skills || []).map(s => `<span class="tag">${escapeHtml(s)}</span>`).join('') || '—'}</div>
-        </div>`;
+        </div>
+        ${Auth.isAdmin() ? `<div style="margin-top:1rem"><button class="btn btn-sm btn-danger" onclick="CandidatesPage.deleteCandidate('${candidateId}', true)">Удалить кандидата</button></div>` : ''}`;
 
       // Load resumes
       await loadResumes(candidateId);
@@ -83,6 +85,25 @@ const CandidatesPage = (() => {
       await loadCandidateMatches(candidateId);
     } catch (e) {
       infoEl.innerHTML = `<div class="error-text">${escapeHtml(e.message)}</div>`;
+    }
+  }
+
+  async function deleteCandidate(candidateId, fromDetail = false) {
+    if (!Auth.isAdmin()) {
+      App.toast('Удаление доступно только администратору', 'warning');
+      return;
+    }
+    if (!confirm('Удалить кандидата? Это действие необратимо.')) return;
+
+    try {
+      await API.del(`/profiles/candidates/${candidateId}`);
+      App.toast('Кандидат удалён', 'success');
+      if (fromDetail) {
+        App.navigate('candidates');
+      }
+      await fetchList();
+    } catch (e) {
+      App.toast(e.message, 'error');
     }
   }
 
@@ -132,5 +153,5 @@ const CandidatesPage = (() => {
     document.getElementById('candidates-grade-filter').addEventListener('change', fetchList);
   }
 
-  return { load, init, showDetail };
+  return { load, init, showDetail, deleteCandidate };
 })();

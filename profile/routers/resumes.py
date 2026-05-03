@@ -1,13 +1,14 @@
 import asyncio
 
-from fastapi import APIRouter, Depends, Request, UploadFile
+from fastapi import APIRouter, Depends, UploadFile
 
 from common.auth import Actor, extract_actor, require_permission
+from common.exceptions import AppError
 from common.schemas.base import BaseResponse
 
 from profile.config import ProfileConfig
 from profile.repository import ProfileRepository
-from profile.schemas.resume import ResumeUploadData
+from profile.schemas.resume import ResumeStatusData, ResumeUploadData
 from profile.services.event_publisher import EventPublisher
 from profile.services.file_validator import FileValidator
 from profile.services.resume_processor import ResumeProcessor
@@ -78,6 +79,40 @@ def create_router(
             )
         )
 
+    @router.get("/{resume_id}")
+    async def get_resume_status(
+        resume_id: str,
+        actor: Actor = Depends(extract_actor),
+    ) -> BaseResponse[ResumeStatusData]:
+        """Получить текущий статус обработки резюме по ID."""
+        require_permission(actor, "resumes:upload")
+
+        parsed_resume_id = _parse_uuid(resume_id)
+
+        async with db.session() as session:
+            repo = ProfileRepository(session)
+            resume = await repo.get_resume(parsed_resume_id)
+
+        if not resume:
+            raise AppError(
+                code="not_found",
+                message="Резюме не найдено",
+                status_code=404,
+            )
+
+        return BaseResponse(
+            data=ResumeStatusData(
+                resume_id=str(resume.id),
+                candidate_id=(
+                    str(resume.candidate_id)
+                    if resume.candidate_id
+                    else None
+                ),
+                status=resume.status,
+                error_detail=resume.error_detail,
+            )
+        )
+
     return router
 
 
@@ -91,3 +126,17 @@ async def _process_in_background(
     async with db.session() as session:
         repo = ProfileRepository(session)
         await processor.process(resume_id, file_key, repo)
+
+
+def _parse_uuid(value: str):
+    """Преобразовать строку в UUID."""
+    import uuid
+
+    try:
+        return uuid.UUID(value)
+    except ValueError:
+        raise AppError(
+            code="invalid_id",
+            message="Некорректный формат ID",
+            status_code=400,
+        )

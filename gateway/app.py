@@ -9,7 +9,12 @@ from common.request_id import RequestIdMiddleware
 
 from gateway.config import GatewayConfig
 from gateway.routers import auth, integrations, proxy
-from gateway.services.auth_service import AuthService, InMemoryAuthStore
+from gateway.services.auth_service import (
+    AuthService,
+    FallbackAuthStore,
+    InMemoryAuthStore,
+    RedisAuthStore,
+)
 from gateway.services.jwt_service import JwtService
 from gateway.services.proxy_service import ProxyService
 from gateway.services.rate_limiter import SlidingWindowRateLimiter
@@ -18,12 +23,45 @@ logger = setup_logger("gateway")
 
 config = GatewayConfig()
 
+
+def _build_auth_store(cfg: GatewayConfig):
+    backend = cfg.AUTH_STORE_BACKEND.lower().strip()
+
+    if backend == "memory":
+        logger.info("AuthStore backend: in-memory")
+        return InMemoryAuthStore()
+
+    redis_store = RedisAuthStore(
+        redis_url=cfg.REDIS_URL,
+        key_prefix=cfg.REDIS_KEY_PREFIX,
+        integration_ttl=cfg.INTEGRATION_KEY_TTL,
+    )
+    if backend == "redis":
+        logger.info("AuthStore backend: redis")
+        return redis_store
+
+    if backend == "auto":
+        logger.info("AuthStore backend: auto (redis -> in-memory fallback)")
+        return FallbackAuthStore(
+            primary=redis_store,
+            fallback=InMemoryAuthStore(),
+        )
+
+    logger.warning(
+        "Неизвестный AUTH_STORE_BACKEND=%s, используется auto режим",
+        cfg.AUTH_STORE_BACKEND,
+    )
+    return FallbackAuthStore(
+        primary=redis_store,
+        fallback=InMemoryAuthStore(),
+    )
+
 jwt_service = JwtService(
     secret=config.JWT_SECRET,
     access_ttl=config.JWT_ACCESS_TTL,
     refresh_ttl=config.JWT_REFRESH_TTL,
 )
-auth_store = InMemoryAuthStore()
+auth_store = _build_auth_store(config)
 auth_service = AuthService(config=config, store=auth_store, jwt=jwt_service)
 
 rate_limiter = SlidingWindowRateLimiter(
@@ -38,6 +76,7 @@ async def lifespan(application: FastAPI):
     """Жизненный цикл приложения: инициализация и завершение ресурсов."""
     logger.info("Gateway запущен на порту 8000")
     yield
+    await auth_service.close()
     await proxy_service.close()
     logger.info("Gateway остановлен")
 

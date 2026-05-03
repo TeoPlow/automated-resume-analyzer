@@ -2,6 +2,16 @@
  * Matching page — run matching and view results
  */
 const MatchingPage = (() => {
+  function vacancyStatusLabel(status) {
+    const map = {
+      draft: 'Черновик',
+      open: 'Открыта',
+      closed: 'Закрыта',
+      archived: 'Архив',
+    };
+    return map[status] || status;
+  }
+
   async function load() {
     await loadVacancySelect();
   }
@@ -12,7 +22,7 @@ const MatchingPage = (() => {
       const data = await API.get('/search/vacancies', { limit: 100 });
       const vacancies = data.data || [];
       select.innerHTML = '<option value="">Выберите вакансию...</option>' +
-        vacancies.map(v => `<option value="${v.id}">${escapeHtml(v.title)} (${v.status})</option>`).join('');
+        vacancies.map(v => `<option value="${v.id}">${escapeHtml(v.title)} (${vacancyStatusLabel(v.status)})</option>`).join('');
     } catch (e) {
       select.innerHTML = '<option value="">Ошибка загрузки</option>';
     }
@@ -70,8 +80,28 @@ const MatchingPage = (() => {
       attempts++;
       try {
         const data = await API.get(`/matching/results/${runId}`);
-        const run = data.data;
+        const payload = data.data;
 
+        // Current API returns a plain list for /matching/results/{run_id}.
+        if (Array.isArray(payload)) {
+          if (!payload.length && attempts < 3) {
+            setTimeout(poll, 1000);
+            return;
+          }
+
+          if (!payload.length) {
+            content.innerHTML = '<div class="empty-state">Нет подходящих кандидатов</div>';
+            return;
+          }
+
+          content.innerHTML = `
+            <p class="text-muted mb-1">Оценено кандидатов: ${payload.length}</p>
+            ${payload.map(r => renderMatchResult(r)).join('')}`;
+          return;
+        }
+
+        // Backward-compatible path if API returns run metadata object.
+        const run = payload || {};
         if (run.status === 'completed') {
           const results = run.results || [];
           if (!results.length) {

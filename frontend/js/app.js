@@ -55,34 +55,46 @@ function scoreClass(score) {
   return 'score-low';
 }
 
+function factorLabel(factor) {
+  const map = {
+    skills: 'Навыки',
+    experience: 'Опыт',
+    grade: 'Грейд',
+    location: 'Локация',
+    salary: 'Зарплата',
+  };
+  return map[factor] || factor;
+}
+
 function renderMatchResult(r) {
   const score = r.final_score ?? 0;
   const explanations = r.explanations || [];
+  const candidateTitle = r.candidate_name || 'Неизвестный кандидат';
   return `
     <div class="result-card">
       <div class="result-header">
         <div style="display:flex;align-items:center;gap:0.75rem">
           <div class="score-badge ${scoreClass(score)}">${score.toFixed(1)}</div>
           <div>
-            <h4>${escapeHtml(r.candidate_name || r.candidate_id || '—')}</h4>
+            <h4>${escapeHtml(candidateTitle)}</h4>
             ${r.vacancy_title ? `<span class="text-muted">${escapeHtml(r.vacancy_title)}</span>` : ''}
           </div>
         </div>
         <span class="badge badge-gray">#${r.rank || '—'}</span>
       </div>
       <div class="score-breakdown">
-        ${renderScoreBar('Skills', r.skill_score)}
-        ${renderScoreBar('Experience', r.experience_score)}
-        ${renderScoreBar('Grade', r.grade_score)}
-        ${renderScoreBar('Location', r.location_score)}
-        ${renderScoreBar('Salary', r.salary_score)}
+        ${renderScoreBar('Навыки', r.skill_score)}
+        ${renderScoreBar('Опыт', r.experience_score)}
+        ${renderScoreBar('Грейд', r.grade_score)}
+        ${renderScoreBar('Локация', r.location_score)}
+        ${renderScoreBar('Зарплата', r.salary_score)}
       </div>
       ${explanations.length ? `
         <details class="explanation-card" style="margin-top:0.5rem">
           <summary style="cursor:pointer;font-size:0.8rem;font-weight:600;color:var(--gray-600)">Подробности</summary>
           ${explanations.map(ex => `
             <div class="factor-row">
-              <span><strong>${escapeHtml(ex.factor)}</strong> — ${ex.score?.toFixed(1)} × ${ex.weight?.toFixed(2)} = ${ex.impact?.toFixed(1)}</span>
+              <span><strong>${escapeHtml(factorLabel(ex.factor))}</strong> — ${ex.score?.toFixed(1)} × ${ex.weight?.toFixed(2)} = ${ex.impact?.toFixed(1)}</span>
               <span class="factor-detail">${escapeHtml(ex.detail || '')}</span>
             </div>
           `).join('')}

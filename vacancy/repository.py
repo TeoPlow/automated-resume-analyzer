@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from vacancy.models.vacancy import Vacancy, VacancyRequirement
 
@@ -75,7 +76,13 @@ class VacancyRepository:
 
     async def get(self, vacancy_id: uuid.UUID) -> Vacancy | None:
         """Получить вакансию по ID с требованиями."""
-        return await self._session.get(Vacancy, vacancy_id)
+        stmt = (
+            select(Vacancy)
+            .options(selectinload(Vacancy.requirements))
+            .where(Vacancy.id == vacancy_id)
+        )
+        result = await self._session.execute(stmt)
+        return result.scalar_one_or_none()
 
     async def update(
         self, vacancy_id: uuid.UUID, **fields
@@ -101,7 +108,7 @@ class VacancyRepository:
         location: str | None = None,
     ) -> tuple[list[Vacancy], int]:
         """Получить список вакансий с фильтрами и пагинацией."""
-        stmt = select(Vacancy)
+        stmt = select(Vacancy).options(selectinload(Vacancy.requirements))
         count_stmt = select(func.count(Vacancy.id))
 
         if status:
@@ -134,9 +141,22 @@ class VacancyRepository:
         self, vacancy_ids: list[uuid.UUID]
     ) -> list[Vacancy]:
         """Получить список вакансий по массиву ID."""
-        stmt = select(Vacancy).where(Vacancy.id.in_(vacancy_ids))
+        stmt = (
+            select(Vacancy)
+            .options(selectinload(Vacancy.requirements))
+            .where(Vacancy.id.in_(vacancy_ids))
+        )
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
+
+    async def delete(self, vacancy_id: uuid.UUID) -> bool:
+        """Удалить вакансию по ID. Возвращает True, если вакансия найдена."""
+        vacancy = await self.get(vacancy_id)
+        if not vacancy:
+            return False
+        await self._session.delete(vacancy)
+        await self._session.flush()
+        return True
 
     async def commit(self) -> None:
         """Зафиксировать транзакцию."""

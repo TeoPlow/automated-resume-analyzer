@@ -1,9 +1,16 @@
 import uuid
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from common.exceptions import AppError
-from matching.services.matching_service import _parse_uuid, _to_result_data
+from matching.schemas.match import MatchRunRequest
+from matching.services.matching_service import (
+    MatchingService,
+    _parse_uuid,
+    _to_result_data,
+)
 
 
 class TestParseUuid:
@@ -112,3 +119,212 @@ class TestWeightsResolution:
 
         assert weights["skills"] == 0.50
         assert weights["experience"] == 0.20
+
+
+@pytest.mark.asyncio
+class TestCandidateFetchStrategy:
+
+    async def test_fetch_candidates_with_ids_uses_bulk(self, matching_config):
+        client = MagicMock()
+        client.get_candidates_bulk = AsyncMock(return_value=[{"id": "c1"}])
+        client.get_active_candidates = AsyncMock(return_value=[{"id": "c2"}])
+
+        service = MatchingService(
+            config=matching_config,
+            scorer=MagicMock(),
+            client=client,
+            events=MagicMock(),
+        )
+        body = MatchRunRequest(
+            vacancy_id="550e8400-e29b-41d4-a716-446655440000",
+            candidate_ids=["660e8400-e29b-41d4-a716-446655440001"],
+        )
+
+        result = await service._fetch_candidates(body)
+
+        assert result == [{"id": "c1"}]
+        client.get_candidates_bulk.assert_awaited_once_with(
+            ["660e8400-e29b-41d4-a716-446655440001"]
+        )
+        client.get_active_candidates.assert_not_awaited()
+
+    async def test_fetch_candidates_without_ids_uses_active(self, matching_config):
+        client = MagicMock()
+        client.get_candidates_bulk = AsyncMock(return_value=[])
+        client.get_active_candidates = AsyncMock(return_value=[{"id": "c-active"}])
+
+        service = MatchingService(
+            config=matching_config,
+            scorer=MagicMock(),
+            client=client,
+            events=MagicMock(),
+        )
+        body = MatchRunRequest(
+            vacancy_id="550e8400-e29b-41d4-a716-446655440000"
+        )
+
+        result = await service._fetch_candidates(body)
+
+        assert result == [{"id": "c-active"}]
+        client.get_active_candidates.assert_awaited_once()
+        client.get_candidates_bulk.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+class TestForceRecomputeBehavior:
+
+    async def test_reuses_latest_run_when_force_false(self, matching_config):
+        service = MatchingService(
+            config=matching_config,
+            scorer=MagicMock(),
+            client=MagicMock(),
+            events=MagicMock(),
+        )
+
+        existing_id = uuid.UUID("550e8400-e29b-41d4-a716-446655440000")
+        repo = MagicMock()
+        repo.get_latest_completed_run_by_vacancy = AsyncMock(
+            return_value=SimpleNamespace(id=existing_id, status="completed")
+        )
+        repo.create_run = AsyncMock()
+
+        body = MatchRunRequest(vacancy_id=str(existing_id), force_recompute=False)
+        result = await service.run(body, repo)
+
+        assert result.run_id == str(existing_id)
+        assert result.status == "completed"
+        repo.create_run.assert_not_awaited()
+
+    async def test_force_recompute_triggers_new_run(self, matching_config):
+        client = MagicMock()
+        client.get_vacancy = AsyncMock(
+            return_value={
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "requirements": [],
+                "grade": [],
+                "location": None,
+                "salary_min": None,
+                "salary_max": None,
+            }
+        )
+        client.get_active_candidates = AsyncMock(return_value=[])
+        client.get_candidates_bulk = AsyncMock(return_value=[])
+
+        events = MagicMock()
+        service = MatchingService(
+            config=matching_config,
+            scorer=MagicMock(),
+            client=client,
+            events=events,
+        )
+
+        run_id = uuid.UUID("550e8400-e29b-41d4-a716-446655440000")
+        repo = MagicMock()
+        repo.get_latest_completed_run_by_vacancy = AsyncMock(
+            return_value=SimpleNamespace(id=uuid.uuid4(), status="completed")
+        )
+        repo.create_run = AsyncMock(
+            return_value=SimpleNamespace(id=run_id, status="running")
+        )
+        repo.commit = AsyncMock()
+        repo.complete_run = AsyncMock()
+        repo.save_result = AsyncMock()
+        repo.save_explanation = AsyncMock()
+
+        body = MatchRunRequest(vacancy_id=str(run_id), force_recompute=True)
+        result = await service.run(body, repo)
+
+        assert result.run_id == str(run_id)
+        assert result.status == "completed"
+        repo.get_latest_completed_run_by_vacancy.assert_not_awaited()
+        repo.create_run.assert_awaited_once()
+        repo.complete_run.assert_awaited_once()
+        events.publish.assert_called_once()
+
+
+@pytest.mark.asyncio
+class TestResultEnrichmentFallback:
+
+    async def test_load_candidate_names_uses_single_fetch_for_missing(self, matching_config):
+        first_candidate_id = "660e8400-e29b-41d4-a716-446655440001"
+        second_candidate_id = "660e8400-e29b-41d4-a716-446655440002"
+        vacancy_id = "770e8400-e29b-41d4-a716-446655440010"
+
+        client = MagicMock()
+        client.get_candidates_bulk = AsyncMock(
+            return_value=[{"id": first_candidate_id, "full_name": "Иван Иванов"}]
+        )
+        client.get_candidate = AsyncMock(
+            return_value={"id": second_candidate_id, "full_name": "Пётр Петров"}
+        )
+
+        service = MatchingService(
+            config=matching_config,
+            scorer=MagicMock(),
+            client=client,
+            events=MagicMock(),
+        )
+
+        results = [
+            SimpleNamespace(
+                candidate_id=uuid.UUID(first_candidate_id),
+                vacancy_id=uuid.UUID(vacancy_id),
+            ),
+            SimpleNamespace(
+                candidate_id=uuid.UUID(second_candidate_id),
+                vacancy_id=uuid.UUID(vacancy_id),
+            ),
+        ]
+
+        names = await service._load_candidate_names(results)
+
+        assert names[first_candidate_id] == "Иван Иванов"
+        assert names[second_candidate_id] == "Пётр Петров"
+        client.get_candidates_bulk.assert_awaited_once_with(
+            sorted([first_candidate_id, second_candidate_id])
+        )
+        client.get_candidate.assert_awaited_once_with(second_candidate_id)
+
+    async def test_to_result_data_list_uses_fallback_for_missing_titles(self, matching_config):
+        candidate_id = "660e8400-e29b-41d4-a716-446655440003"
+        vacancy_id = "770e8400-e29b-41d4-a716-446655440011"
+        result_id = "550e8400-e29b-41d4-a716-446655440111"
+
+        client = MagicMock()
+        client.get_candidates_bulk = AsyncMock(return_value=[])
+        client.get_candidate = AsyncMock(
+            return_value={"id": candidate_id, "full_name": "Мария Сидорова"}
+        )
+        client.get_vacancies_bulk = AsyncMock(return_value=[])
+        client.get_vacancy = AsyncMock(
+            return_value={"id": vacancy_id, "title": "Python Developer"}
+        )
+
+        service = MatchingService(
+            config=matching_config,
+            scorer=MagicMock(),
+            client=client,
+            events=MagicMock(),
+        )
+
+        result = SimpleNamespace(
+            id=uuid.UUID(result_id),
+            candidate_id=uuid.UUID(candidate_id),
+            vacancy_id=uuid.UUID(vacancy_id),
+            final_score=82.0,
+            skill_score=80.0,
+            experience_score=90.0,
+            grade_score=70.0,
+            location_score=100.0,
+            salary_score=75.0,
+            rank=1,
+            explanations=[],
+        )
+
+        rows = await service._to_result_data_list([result])
+
+        assert len(rows) == 1
+        assert rows[0].candidate_name == "Мария Сидорова"
+        assert rows[0].vacancy_title == "Python Developer"
+        client.get_candidate.assert_awaited_once_with(candidate_id)
+        client.get_vacancy.assert_awaited_once_with(vacancy_id)

@@ -135,7 +135,7 @@ class CandidateScorer:
         cand_lower = {s.lower().strip() for s in candidate_skills}
         matched = [s for s in required_skills if s.lower().strip() in cand_lower]
         score = (len(matched) / len(required_skills)) * 100 if required_skills else 100
-        detail = f"Exact: {len(matched)}/{len(required_skills)}"
+        detail = f"Точное совпадение: {len(matched)}/{len(required_skills)}"
         return round(score, 2), detail
 
     def _score_experience(

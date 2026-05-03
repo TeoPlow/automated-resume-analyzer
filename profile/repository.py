@@ -188,6 +188,28 @@ class ProfileRepository:
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
 
+    async def get_active_candidates(self) -> list[Candidate]:
+        """Получить кандидатов с готовым агрегированным профилем."""
+        stmt = (
+            select(Candidate)
+            .join(
+                CandidateProfile,
+                CandidateProfile.candidate_id == Candidate.id,
+            )
+            .order_by(Candidate.updated_at.desc())
+        )
+        result = await self._session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def delete_candidate(self, candidate_id: uuid.UUID) -> bool:
+        """Удалить кандидата. Возвращает True, если кандидат найден."""
+        candidate = await self.get_candidate(candidate_id)
+        if not candidate:
+            return False
+        await self._session.delete(candidate)
+        await self._session.flush()
+        return True
+
     async def commit(self) -> None:
         """Зафиксировать транзакцию."""
         await self._session.commit()

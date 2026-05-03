@@ -1,6 +1,11 @@
 from fastapi import APIRouter, Depends, Query
 
-from common.auth import Actor, extract_actor, require_permission
+from common.auth import (
+    Actor,
+    extract_actor,
+    require_admin,
+    require_permission,
+)
 from common.schemas.base import BaseResponse, PaginationData
 
 from common.database import Database
@@ -91,5 +96,18 @@ def create_router(db: Database, service: VacancyService) -> APIRouter:
                 limit=limit, offset=offset, total=total
             ),
         )
+
+    @router.delete("/{vacancy_id}", status_code=204)
+    async def delete_vacancy(
+        vacancy_id: str,
+        actor: Actor = Depends(extract_actor),
+    ) -> None:
+        """Удалить вакансию (только администратор)."""
+        require_permission(actor, "vacancies:write")
+        require_admin(actor)
+
+        async with db.session() as session:
+            repo = VacancyRepository(session)
+            await service.delete(vacancy_id, repo)
 
     return router

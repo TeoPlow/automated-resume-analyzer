@@ -45,7 +45,9 @@ class MatchResultData(BaseModel):
 
     id: str
     candidate_id: str
+    candidate_name: str | None = None
     vacancy_id: str
+    vacancy_title: str | None = None
     final_score: float
     skill_score: float
     experience_score: float
