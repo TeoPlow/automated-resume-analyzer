@@ -1,6 +1,5 @@
 import pytest
 
-
 pytestmark = pytest.mark.asyncio
 
 
@@ -59,9 +58,7 @@ class TestLogin:
 
 class TestMe:
 
-    async def test_me_with_valid_token_returns_actor(
-        self, client, admin_credentials
-    ):
+    async def test_me_with_valid_token_returns_actor(self, client, admin_credentials):
         username, password = admin_credentials
         login_resp = await client.post(
             "/api/v1/auth/login",
@@ -87,9 +84,7 @@ class TestMe:
 
 class TestRefresh:
 
-    async def test_refresh_returns_new_token_pair(
-        self, client, admin_credentials
-    ):
+    async def test_refresh_returns_new_token_pair(self, client, admin_credentials):
         username, password = admin_credentials
         login_resp = await client.post(
             "/api/v1/auth/login",
@@ -149,9 +144,7 @@ class TestRefresh:
 
 class TestLogout:
 
-    async def test_logout_invalidates_refresh_token(
-        self, client, admin_credentials
-    ):
+    async def test_logout_invalidates_refresh_token(self, client, admin_credentials):
         username, password = admin_credentials
         login_resp = await client.post(
             "/api/v1/auth/login",

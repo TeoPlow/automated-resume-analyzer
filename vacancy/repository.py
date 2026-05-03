@@ -84,17 +84,13 @@ class VacancyRepository:
         result = await self._session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def update(
-        self, vacancy_id: uuid.UUID, **fields
-    ) -> Vacancy | None:
+    async def update(self, vacancy_id: uuid.UUID, **fields) -> Vacancy | None:
         """Обновить поля вакансии."""
         values = {k: v for k, v in fields.items() if v is not None}
         if not values:
             return await self.get(vacancy_id)
         values["updated_at"] = datetime.now(timezone.utc)
-        stmt = (
-            update(Vacancy).where(Vacancy.id == vacancy_id).values(**values)
-        )
+        stmt = update(Vacancy).where(Vacancy.id == vacancy_id).values(**values)
         await self._session.execute(stmt)
         return await self.get(vacancy_id)
 
@@ -122,9 +118,7 @@ class VacancyRepository:
             count_stmt = count_stmt.where(Vacancy.grade.any(grade))  # type: ignore[arg-type]
         if location:
             stmt = stmt.where(Vacancy.location.ilike(f"%{location}%"))
-            count_stmt = count_stmt.where(
-                Vacancy.location.ilike(f"%{location}%")
-            )
+            count_stmt = count_stmt.where(Vacancy.location.ilike(f"%{location}%"))
 
         stmt = stmt.order_by(Vacancy.created_at.desc())
         stmt = stmt.limit(limit).offset(offset)
@@ -137,9 +131,7 @@ class VacancyRepository:
 
         return vacancies, total
 
-    async def get_bulk(
-        self, vacancy_ids: list[uuid.UUID]
-    ) -> list[Vacancy]:
+    async def get_bulk(self, vacancy_ids: list[uuid.UUID]) -> list[Vacancy]:
         """Получить список вакансий по массиву ID."""
         stmt = (
             select(Vacancy)

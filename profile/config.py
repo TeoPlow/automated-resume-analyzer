@@ -24,9 +24,7 @@ class ProfileConfig:
     LLM_MAX_RETRIES: int = int(os.getenv("LLM_MAX_RETRIES", "2"))
 
     # RabbitMQ
-    RABBITMQ_URL: str = os.getenv(
-        "RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/"
-    )
+    RABBITMQ_URL: str = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")
     EXCHANGE_NAME: str = os.getenv("EXCHANGE_NAME", "ara.events")
     DLX_NAME: str = os.getenv("DLX_NAME", "ara.events.dlx")
 

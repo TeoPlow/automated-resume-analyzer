@@ -21,7 +21,8 @@ _USER_PROMPT_TEMPLATE = """Parse this resume and extract the following fields:
 - location (string or null)
 - summary (string — brief professional summary, 1-2 sentences)
 - skills (array of strings — ALL technical and soft skills mentioned)
-- experience (array of objects, each with: company, position, start_date, end_date, description, technologies)
+- experience (array of objects, each with: company, position, start_date,
+  end_date, description, technologies)
 - education (array of objects: institution, degree, field, graduation_year)
 - languages (array of objects: language, level)
 - total_experience_years (number — total professional experience)
@@ -135,6 +136,6 @@ def _parse_json_response(text: str) -> dict:
     text = text.strip()
     if text.startswith("```"):
         lines = text.split("\n")
-        lines = [l for l in lines if not l.strip().startswith("```")]
+        lines = [line for line in lines if not line.strip().startswith("```")]
         text = "\n".join(lines)
     return json.loads(text)

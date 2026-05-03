@@ -28,9 +28,7 @@ def create_router(config: ProfileConfig, db: Database) -> APIRouter:
             repo = ProfileRepository(session)
             candidates = await repo.get_active_candidates()
 
-        return BaseResponse(
-            data=[_to_candidate_data(c) for c in candidates]
-        )
+        return BaseResponse(data=[_to_candidate_data(c) for c in candidates])
 
     @router.get("/candidates/{candidate_id:uuid}")
     async def get_candidate_internal(
@@ -69,9 +67,7 @@ def create_router(config: ProfileConfig, db: Database) -> APIRouter:
             repo = ProfileRepository(session)
             candidates = await repo.get_candidates_bulk(uuids)
 
-        return BaseResponse(
-            data=[_to_candidate_data(c) for c in candidates]
-        )
+        return BaseResponse(data=[_to_candidate_data(c) for c in candidates])
 
     return router
 

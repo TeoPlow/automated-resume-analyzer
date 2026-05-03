@@ -81,11 +81,7 @@ class FakeRedis:
 
     def _has_key(self, key: str) -> bool:
         self._expire_if_needed(key)
-        return (
-            key in self._values
-            or key in self._hashes
-            or key in self._sets
-        )
+        return key in self._values or key in self._hashes or key in self._sets
 
     async def set(self, key: str, value: str, ex: int | None = None):
         self._values[key] = value

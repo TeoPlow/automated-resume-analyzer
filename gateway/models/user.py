@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class HRUser(BaseModel):
-    """HR-пользователь системы."""
+    """HR-пользователь системы"""
 
     username: str
     password: str
@@ -12,7 +12,7 @@ class HRUser(BaseModel):
 
 
 class IntegrationKey(BaseModel):
-    """API-ключ для внешней интеграции (бот, email-адаптер, job-портал)."""
+    """API-ключ для внешней интеграции"""
 
     key_id: str
     name: str

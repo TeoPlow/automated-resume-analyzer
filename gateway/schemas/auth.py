@@ -2,26 +2,26 @@ from pydantic import BaseModel
 
 
 class LoginRequest(BaseModel):
-    """Запрос на вход в систему."""
+    """Запрос на вход в систему"""
 
     username: str
     password: str
 
 
 class RefreshRequest(BaseModel):
-    """Запрос на обновление access-токена."""
+    """Запрос на обновление access-токена"""
 
     refresh_token: str
 
 
 class LogoutRequest(BaseModel):
-    """Запрос на выход (отзыв refresh-токена)."""
+    """Запрос на выход из системы (отзыв refresh-токена)"""
 
     refresh_token: str
 
 
 class TokenPairData(BaseModel):
-    """Пара access + refresh токенов."""
+    """Пара access + refresh токенов"""
 
     access_token: str
     refresh_token: str
@@ -29,7 +29,7 @@ class TokenPairData(BaseModel):
 
 
 class MeData(BaseModel):
-    """Данные текущего аутентифицированного пользователя."""
+    """Данные текущего аутентифицированного пользователя"""
 
     actor_id: str
     actor_type: str
@@ -37,14 +37,14 @@ class MeData(BaseModel):
 
 
 class IntegrationKeyCreateRequest(BaseModel):
-    """Запрос на создание API-ключа для интеграции."""
+    """Запрос на создание API-ключа для интеграции"""
 
     name: str
     permissions: list[str] = ["resumes:upload"]
 
 
 class IntegrationKeyInfo(BaseModel):
-    """Информация о ключе интеграции (без секрета)."""
+    """Информация о ключе интеграции (без секрета)"""
 
     key_id: str
     name: str
@@ -54,7 +54,7 @@ class IntegrationKeyInfo(BaseModel):
 
 
 class IntegrationKeyCreateData(BaseModel):
-    """Результат создания ключа (секрет показывается один раз)."""
+    """Результат создания ключа (секрет показывается один раз)"""
 
     key_id: str
     name: str

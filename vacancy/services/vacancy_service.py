@@ -192,6 +192,7 @@ def _parse_uuid(value: str) -> uuid.UUID:
             status_code=400,
         )
 
+
 def _validate_status_transition(current: str, target: str) -> None:
     """Проверить допустимость перехода статуса вакансии."""
     if target not in _VALID_STATUSES:
@@ -208,12 +209,13 @@ def _validate_status_transition(current: str, target: str) -> None:
             status_code=400,
         )
 
+
 def _to_vacancy_data(vacancy) -> VacancyData:
     """Преобразовать ORM-модель вакансии в Pydantic-схему."""
     from vacancy.schemas.vacancy import RequirementData
 
     requirements = []
-    for req in (vacancy.requirements or []):
+    for req in vacancy.requirements or []:
         requirements.append(
             RequirementData(
                 id=str(req.id),

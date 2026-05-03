@@ -56,6 +56,7 @@ def _build_auth_store(cfg: GatewayConfig):
         fallback=InMemoryAuthStore(),
     )
 
+
 jwt_service = JwtService(
     secret=config.JWT_SECRET,
     access_ttl=config.JWT_ACCESS_TTL,

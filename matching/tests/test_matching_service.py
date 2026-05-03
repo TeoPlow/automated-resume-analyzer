@@ -111,8 +111,11 @@ class TestWeightsResolution:
             events=MagicMock(),
         )
         custom = MatchWeights(
-            skills=0.50, experience=0.20, grade=0.10,
-            location=0.10, salary=0.10,
+            skills=0.50,
+            experience=0.20,
+            grade=0.10,
+            location=0.10,
+            salary=0.10,
         )
 
         weights = service._resolve_weights(custom)
@@ -159,9 +162,7 @@ class TestCandidateFetchStrategy:
             client=client,
             events=MagicMock(),
         )
-        body = MatchRunRequest(
-            vacancy_id="550e8400-e29b-41d4-a716-446655440000"
-        )
+        body = MatchRunRequest(vacancy_id="550e8400-e29b-41d4-a716-446655440000")
 
         result = await service._fetch_candidates(body)
 
@@ -245,7 +246,9 @@ class TestForceRecomputeBehavior:
 @pytest.mark.asyncio
 class TestResultEnrichmentFallback:
 
-    async def test_load_candidate_names_uses_single_fetch_for_missing(self, matching_config):
+    async def test_load_candidate_names_uses_single_fetch_for_missing(
+        self, matching_config
+    ):
         first_candidate_id = "660e8400-e29b-41d4-a716-446655440001"
         second_candidate_id = "660e8400-e29b-41d4-a716-446655440002"
         vacancy_id = "770e8400-e29b-41d4-a716-446655440010"
@@ -285,7 +288,9 @@ class TestResultEnrichmentFallback:
         )
         client.get_candidate.assert_awaited_once_with(second_candidate_id)
 
-    async def test_to_result_data_list_uses_fallback_for_missing_titles(self, matching_config):
+    async def test_to_result_data_list_uses_fallback_for_missing_titles(
+        self, matching_config
+    ):
         candidate_id = "660e8400-e29b-41d4-a716-446655440003"
         vacancy_id = "770e8400-e29b-41d4-a716-446655440011"
         result_id = "550e8400-e29b-41d4-a716-446655440111"

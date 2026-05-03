@@ -33,24 +33,26 @@ class SearchRepository:
         offset: int = 0,
     ) -> tuple[list[tuple[Candidate, CandidateProfile | None]], int]:
         """Поиск кандидатов с фильтрами и полнотекстовым поиском."""
-        stmt = (
-            select(Candidate, CandidateProfile)
-            .outerjoin(
-                CandidateProfile,
-                Candidate.id == CandidateProfile.candidate_id,
-            )
+        stmt = select(Candidate, CandidateProfile).outerjoin(
+            CandidateProfile,
+            Candidate.id == CandidateProfile.candidate_id,
         )
-        count_stmt = (
-            select(func.count(Candidate.id))
-            .outerjoin(
-                CandidateProfile,
-                Candidate.id == CandidateProfile.candidate_id,
-            )
+        count_stmt = select(func.count(Candidate.id)).outerjoin(
+            CandidateProfile,
+            Candidate.id == CandidateProfile.candidate_id,
         )
 
         stmt, count_stmt = _apply_candidate_filters(
-            stmt, count_stmt, q, skills, grade, location,
-            experience_min, experience_max, salary_min, salary_max,
+            stmt,
+            count_stmt,
+            q,
+            skills,
+            grade,
+            location,
+            experience_min,
+            experience_max,
+            salary_min,
+            salary_max,
         )
 
         stmt = stmt.order_by(Candidate.created_at.desc())
@@ -85,12 +87,12 @@ class SearchRepository:
             count_stmt = count_stmt.where(Vacancy.department == department)
         if grade:
             stmt = stmt.where(Vacancy.grade.any(grade))  # type: ignore[arg-type]
-            count_stmt = count_stmt.where(Vacancy.grade.any(grade))  # type: ignore[arg-type]
+            count_stmt = count_stmt.where(
+                Vacancy.grade.any(grade)  # type: ignore[arg-type]
+            )
         if location:
             stmt = stmt.where(Vacancy.location.ilike(f"%{location}%"))
-            count_stmt = count_stmt.where(
-                Vacancy.location.ilike(f"%{location}%")
-            )
+            count_stmt = count_stmt.where(Vacancy.location.ilike(f"%{location}%"))
 
         stmt = stmt.order_by(Vacancy.created_at.desc())
         stmt = stmt.limit(limit).offset(offset)
@@ -212,22 +214,25 @@ class SearchRepository:
             .order_by(func.count(CandidateProfile.id).desc())
         )
         result = await self._session.execute(stmt)
-        return [
-            {"location": row.location, "count": row.count}
-            for row in result.all()
-        ]
+        return [{"location": row.location, "count": row.count} for row in result.all()]
 
 
-def _apply_candidate_filters(stmt, count_stmt, q, skills, grade, location,
-                              experience_min, experience_max,
-                              salary_min, salary_max):
+def _apply_candidate_filters(
+    stmt,
+    count_stmt,
+    q,
+    skills,
+    grade,
+    location,
+    experience_min,
+    experience_max,
+    salary_min,
+    salary_max,
+):
     """Применить фильтры к запросу поиска кандидатов."""
     if q:
         pattern = f"%{q}%"
-        condition = (
-            Candidate.full_name.ilike(pattern)
-            | CandidateProfile.skills.any(q)
-        )
+        condition = Candidate.full_name.ilike(pattern) | CandidateProfile.skills.any(q)
         stmt = stmt.where(condition)
         count_stmt = count_stmt.where(condition)
 
@@ -242,9 +247,7 @@ def _apply_candidate_filters(stmt, count_stmt, q, skills, grade, location,
 
     if location:
         stmt = stmt.where(CandidateProfile.location.ilike(f"%{location}%"))
-        count_stmt = count_stmt.where(
-            CandidateProfile.location.ilike(f"%{location}%")
-        )
+        count_stmt = count_stmt.where(CandidateProfile.location.ilike(f"%{location}%"))
 
     if experience_min is not None:
         stmt = stmt.where(CandidateProfile.experience_years >= experience_min)
@@ -260,14 +263,10 @@ def _apply_candidate_filters(stmt, count_stmt, q, skills, grade, location,
 
     if salary_min is not None:
         stmt = stmt.where(CandidateProfile.salary_expectation >= salary_min)
-        count_stmt = count_stmt.where(
-            CandidateProfile.salary_expectation >= salary_min
-        )
+        count_stmt = count_stmt.where(CandidateProfile.salary_expectation >= salary_min)
 
     if salary_max is not None:
         stmt = stmt.where(CandidateProfile.salary_expectation <= salary_max)
-        count_stmt = count_stmt.where(
-            CandidateProfile.salary_expectation <= salary_max
-        )
+        count_stmt = count_stmt.where(CandidateProfile.salary_expectation <= salary_max)
 
     return stmt, count_stmt

@@ -63,9 +63,7 @@ class TestMergeResults:
         parser = LlmParser("http://fake:11434", "test", max_retries=0)
         from profile.schemas.resume import ParsedContacts
 
-        regex_contacts = ParsedContacts(
-            email="regex@test.com", phone="+79991234567"
-        )
+        regex_contacts = ParsedContacts(email="regex@test.com", phone="+79991234567")
         llm_result = {
             "full_name": "Иван Иванов",
             "contacts": {

@@ -25,59 +25,57 @@ logger = setup_logger("gateway.auth")
 
 
 class AuthStore(ABC):
-    """Абстрактное хранилище данных аутентификации (Strategy pattern)."""
+    """Абстрактное хранилище данных аутентификации"""
 
     @abstractmethod
     async def add_to_blacklist(self, jti: str, ttl_seconds: int) -> None:
-        """Добавить JTI отозванного refresh-токена в чёрный список."""
+        """Добавить JTI отозванного refresh-токена в чёрный список"""
         ...
 
     @abstractmethod
     async def is_blacklisted(self, jti: str) -> bool:
-        """Проверить, находится ли JTI в чёрном списке."""
+        """Проверить, находится ли JTI в чёрном списке"""
         ...
 
     @abstractmethod
     async def save_integration_key(self, key: IntegrationKey) -> None:
-        """Сохранить интеграционный ключ."""
+        """Сохранить интеграционный ключ"""
         ...
 
     @abstractmethod
-    async def get_integration_key_by_hash(
-        self, key_hash: str
-    ) -> IntegrationKey | None:
-        """Найти активный ключ по SHA256-хешу."""
+    async def get_integration_key_by_hash(self, key_hash: str) -> IntegrationKey | None:
+        """Найти активный ключ по SHA256-хешу"""
         ...
 
     @abstractmethod
     async def list_integration_keys(self) -> list[IntegrationKey]:
-        """Получить список всех ключей."""
+        """Получить список всех ключей"""
         ...
 
     @abstractmethod
     async def delete_integration_key(self, key_id: str) -> bool:
-        """Деактивировать ключ по ID. Возвращает True если ключ найден."""
+        """Деактивировать ключ по ID. Возвращает True если ключ найден"""
         ...
 
     @abstractmethod
     async def close(self) -> None:
-        """Освободить ресурсы хранилища (если требуется)."""
+        """Освободить ресурсы хранилища (если требуется)"""
         ...
 
 
 class InMemoryAuthStore(AuthStore):
-    """Хранилище в оперативной памяти (для разработки и тестирования)."""
+    """Хранилище в оперативной памяти (для разработки и тестирования)"""
 
     def __init__(self) -> None:
         self._blacklist: dict[str, float] = {}
         self._keys: dict[str, IntegrationKey] = {}
 
     async def add_to_blacklist(self, jti: str, ttl_seconds: int) -> None:
-        """Добавить JTI в blacklist с временем истечения."""
+        """Добавить JTI в blacklist с временем истечения"""
         self._blacklist[jti] = time.time() + ttl_seconds
 
     async def is_blacklisted(self, jti: str) -> bool:
-        """Проверить наличие JTI в blacklist с учётом TTL."""
+        """Проверить наличие JTI в blacklist с учётом TTL"""
         expires = self._blacklist.get(jti)
         if expires is None:
             return False
@@ -87,24 +85,22 @@ class InMemoryAuthStore(AuthStore):
         return True
 
     async def save_integration_key(self, key: IntegrationKey) -> None:
-        """Сохранить ключ в память."""
+        """Сохранить ключ в память"""
         self._keys[key.key_id] = key
 
-    async def get_integration_key_by_hash(
-        self, key_hash: str
-    ) -> IntegrationKey | None:
-        """Найти активный ключ по хешу."""
+    async def get_integration_key_by_hash(self, key_hash: str) -> IntegrationKey | None:
+        """Найти активный ключ по хешу"""
         for key in self._keys.values():
             if key.key_hash == key_hash and key.is_active:
                 return key
         return None
 
     async def list_integration_keys(self) -> list[IntegrationKey]:
-        """Получить все ключи."""
+        """Получить все ключи"""
         return list(self._keys.values())
 
     async def delete_integration_key(self, key_id: str) -> bool:
-        """Деактивировать ключ."""
+        """Деактивировать ключ"""
         key = self._keys.get(key_id)
         if not key:
             return False
@@ -112,12 +108,12 @@ class InMemoryAuthStore(AuthStore):
         return True
 
     async def close(self) -> None:
-        """Для in-memory хранилища закрытие не требуется."""
+        """Для in-memory хранилища закрытие не требуется"""
         return None
 
 
 class RedisAuthStore(AuthStore):
-    """Redis-хранилище для refresh blacklist и интеграционных ключей."""
+    """Redis-хранилище для refresh blacklist и интеграционных ключей"""
 
     def __init__(
         self,
@@ -133,7 +129,7 @@ class RedisAuthStore(AuthStore):
         self._integration_ttl = max(integration_ttl, 1)
 
     async def add_to_blacklist(self, jti: str, ttl_seconds: int) -> None:
-        """Сохранить JTI refresh-токена в Redis с TTL."""
+        """Сохранить JTI refresh-токена в Redis с TTL"""
         await self._redis.set(
             self._refresh_blacklist_key(jti),
             "1",
@@ -141,11 +137,11 @@ class RedisAuthStore(AuthStore):
         )
 
     async def is_blacklisted(self, jti: str) -> bool:
-        """Проверить наличие JTI в Redis blacklist."""
+        """Проверить наличие JTI в Redis blacklist"""
         return bool(await self._redis.exists(self._refresh_blacklist_key(jti)))
 
     async def save_integration_key(self, key: IntegrationKey) -> None:
-        """Сохранить интеграционный ключ и lookup по hash в Redis."""
+        """Сохранить интеграционный ключ и lookup по hash в Redis"""
         payload = {
             "name": key.name,
             "key_hash": key.key_hash,
@@ -166,10 +162,8 @@ class RedisAuthStore(AuthStore):
                 .execute()
             )
 
-    async def get_integration_key_by_hash(
-        self, key_hash: str
-    ) -> IntegrationKey | None:
-        """Найти активный интеграционный ключ по hash."""
+    async def get_integration_key_by_hash(self, key_hash: str) -> IntegrationKey | None:
+        """Найти активный интеграционный ключ по hash"""
         key_id = await self._redis.get(self._integration_lookup_key(key_hash))
         if not key_id:
             return None
@@ -185,7 +179,7 @@ class RedisAuthStore(AuthStore):
         return key
 
     async def list_integration_keys(self) -> list[IntegrationKey]:
-        """Вернуть список всех известных интеграционных ключей."""
+        """Вернуть список всех известных интеграционных ключей"""
         key_ids = await self._redis.smembers(self._integration_index_key())
         if not key_ids:
             return []
@@ -212,7 +206,7 @@ class RedisAuthStore(AuthStore):
         return keys
 
     async def delete_integration_key(self, key_id: str) -> bool:
-        """Отозвать ключ: выключить флаг активности и удалить hash lookup."""
+        """Отозвать ключ: выключить флаг активности и удалить hash lookup"""
         key_storage = self._integration_key_key(key_id)
         raw = await self._redis.hgetall(key_storage)
         if not raw:
@@ -227,7 +221,7 @@ class RedisAuthStore(AuthStore):
         return True
 
     async def close(self) -> None:
-        """Закрыть Redis-клиент."""
+        """Закрыть Redis-клиент"""
         await self._redis.aclose()
 
     def _refresh_blacklist_key(self, jti: str) -> str:
@@ -271,7 +265,7 @@ class RedisAuthStore(AuthStore):
 
 
 class FallbackAuthStore(AuthStore):
-    """AuthStore с fallback на in-memory при недоступности Redis."""
+    """AuthStore с fallback на in-memory при недоступности Redis"""
 
     def __init__(
         self,
@@ -291,9 +285,7 @@ class FallbackAuthStore(AuthStore):
     async def save_integration_key(self, key: IntegrationKey) -> None:
         await self._with_fallback("save_integration_key", key)
 
-    async def get_integration_key_by_hash(
-        self, key_hash: str
-    ) -> IntegrationKey | None:
+    async def get_integration_key_by_hash(self, key_hash: str) -> IntegrationKey | None:
         return await self._with_fallback("get_integration_key_by_hash", key_hash)
 
     async def list_integration_keys(self) -> list[IntegrationKey]:
@@ -325,13 +317,7 @@ class FallbackAuthStore(AuthStore):
 
 
 class AuthService:
-    """Главный сервис аутентификации Gateway.
-
-    Отвечает за:
-    - Логин/логаут HR-пользователей (JWT)
-    - Аутентификацию по Bearer-токену и API-ключу
-    - Управление интеграционными ключами
-    """
+    """Главный сервис аутентификации Gateway"""
 
     def __init__(
         self,
@@ -345,7 +331,7 @@ class AuthService:
         self._users = self._build_user_registry()
 
     async def login(self, username: str, password: str) -> TokenPairData:
-        """Аутентифицировать пользователя и выдать пару токенов."""
+        """Аутентифицировать пользователя и выдать пару токенов"""
         user = self._users.get(username)
         if not user or user.password != password:
             raise AppError(
@@ -358,7 +344,7 @@ class AuthService:
         return self._issue_tokens(user)
 
     async def refresh(self, refresh_token: str) -> TokenPairData:
-        """Обновить пару токенов по refresh-токену."""
+        """Обновить пару токенов по refresh-токену"""
         payload = self._jwt.decode(refresh_token)
         if payload.get("type") != "refresh":
             raise AppError(
@@ -399,7 +385,7 @@ class AuthService:
         return self._issue_tokens(user)
 
     async def logout(self, refresh_token: str) -> None:
-        """Отозвать refresh-токен, добавив его JTI в blacklist."""
+        """Отозвать refresh-токен, добавив его JTI в blacklist"""
         try:
             payload = self._jwt.decode(refresh_token)
             jti = payload.get("jti", "")
@@ -417,7 +403,7 @@ class AuthService:
         authorization: str | None,
         api_key: str | None,
     ) -> MeData:
-        """Определить актора по Bearer-токену или API-ключу."""
+        """Определить актора по Bearer-токену или API-ключу"""
         if authorization and authorization.startswith("Bearer "):
             token = authorization[7:]
             payload = self._jwt.decode(token)
@@ -435,9 +421,7 @@ class AuthService:
 
         if api_key:
             key_hash = hashlib.sha256(api_key.encode()).hexdigest()
-            integration = await self._store.get_integration_key_by_hash(
-                key_hash
-            )
+            integration = await self._store.get_integration_key_by_hash(key_hash)
             if not integration:
                 raise AppError(
                     code="invalid_api_key",
@@ -461,7 +445,7 @@ class AuthService:
         name: str,
         permissions: list[str],
     ) -> IntegrationKeyCreateData:
-        """Создать новый API-ключ для интеграции."""
+        """Создать новый API-ключ для интеграции"""
         raw_key = secrets.token_urlsafe(32)
         key = IntegrationKey(
             key_id=secrets.token_hex(8),
@@ -482,7 +466,7 @@ class AuthService:
         )
 
     async def list_integration_keys(self) -> list[IntegrationKeyInfo]:
-        """Получить список всех интеграционных ключей."""
+        """Получить список всех интеграционных ключей"""
         keys = await self._store.list_integration_keys()
         return [
             IntegrationKeyInfo(
@@ -495,10 +479,8 @@ class AuthService:
             for k in keys
         ]
 
-    async def rotate_integration_key(
-        self, key_id: str
-    ) -> IntegrationKeyCreateData:
-        """Ротировать ключ: деактивировать старый, создать новый с тем же именем."""
+    async def rotate_integration_key(self, key_id: str) -> IntegrationKeyCreateData:
+        """Переиздать ключ: деактивировать старый, создать новый с тем же именем"""
         keys = await self._store.list_integration_keys()
         old_key = next((k for k in keys if k.key_id == key_id), None)
         if not old_key:
@@ -509,9 +491,7 @@ class AuthService:
             )
 
         await self._store.delete_integration_key(key_id)
-        return await self.create_integration_key(
-            old_key.name, old_key.permissions
-        )
+        return await self.create_integration_key(old_key.name, old_key.permissions)
 
     async def revoke_integration_key(self, key_id: str) -> None:
         """Отозвать (деактивировать) интеграционный ключ."""
@@ -543,9 +523,7 @@ class AuthService:
             "search:use",
             "integrations:manage",
         ]
-        hr_permissions = [
-            p for p in all_permissions if p != "integrations:manage"
-        ]
+        hr_permissions = [p for p in all_permissions if p != "integrations:manage"]
 
         return {
             self._config.ADMIN_USERNAME: HRUser(

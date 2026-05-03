@@ -17,9 +17,7 @@ class Database:
 
     def __init__(self, url: str, echo: bool = False) -> None:
         self._engine = create_async_engine(url, echo=echo, pool_size=10)
-        self._session_factory = async_sessionmaker(
-            self._engine, expire_on_commit=False
-        )
+        self._session_factory = async_sessionmaker(self._engine, expire_on_commit=False)
 
     async def create_tables(self) -> None:
         """Создать все таблицы из зарегистрированных моделей."""

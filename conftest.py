@@ -10,6 +10,7 @@ from profile.config import ProfileConfig
 from profile.services.file_validator import FileValidator
 from profile.services.text_extractor import TextExtractor
 
+
 @pytest.fixture
 def gateway_config():
     return GatewayConfig()

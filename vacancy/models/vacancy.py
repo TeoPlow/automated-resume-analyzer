@@ -26,18 +26,12 @@ class Vacancy(Base):
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    department: Mapped[str | None] = mapped_column(
-        String(100), nullable=True
-    )
+    department: Mapped[str | None] = mapped_column(String(100), nullable=True)
     location: Mapped[str] = mapped_column(String(255), nullable=False)
-    grade: Mapped[list[str]] = mapped_column(
-        ARRAY(Text), nullable=False, default=list
-    )
+    grade: Mapped[list[str]] = mapped_column(ARRAY(Text), nullable=False, default=list)
     salary_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
     salary_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    status: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="draft"
-    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

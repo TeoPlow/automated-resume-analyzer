@@ -44,9 +44,7 @@ class MatchingService:
         weights = self._resolve_weights(body.weights)
 
         if self._can_reuse_latest_run(body):
-            existing_run = await repo.get_latest_completed_run_by_vacancy(
-                vacancy_id
-            )
+            existing_run = await repo.get_latest_completed_run_by_vacancy(vacancy_id)
             if existing_run:
                 logger.info(
                     "Использован существующий run=%s для vacancy=%s",
@@ -92,9 +90,7 @@ class MatchingService:
                     rank=rank,
                 )
                 for expl in explanations:
-                    await repo.save_explanation(
-                        result_id=result.id, **expl
-                    )
+                    await repo.save_explanation(result_id=result.id, **expl)
 
             await repo.complete_run(
                 run.id, status="completed", total_candidates=len(scored)
@@ -155,9 +151,7 @@ class MatchingService:
         results = await repo.get_results_by_candidate(uid)
         return await self._to_result_data_list(results)
 
-    async def _to_result_data_list(
-        self, results: list
-    ) -> list[MatchResultData]:
+    async def _to_result_data_list(self, results: list) -> list[MatchResultData]:
         """Обогатить результаты именем кандидата и названием вакансии."""
         if not results:
             return []
@@ -205,14 +199,10 @@ class MatchingService:
             return {}
 
         return {
-            v["id"]: v.get("title")
-            for v in vacancies
-            if v.get("id") and v.get("title")
+            v["id"]: v.get("title") for v in vacancies if v.get("id") and v.get("title")
         }
 
-    def _resolve_weights(
-        self, weights: MatchWeights | None
-    ) -> dict[str, float]:
+    def _resolve_weights(self, weights: MatchWeights | None) -> dict[str, float]:
         """Получить веса: пользовательские или из конфигурации."""
         if weights:
             return weights.model_dump()
@@ -224,9 +214,7 @@ class MatchingService:
             "salary": self._config.DEFAULT_WEIGHT_SALARY,
         }
 
-    async def _fetch_candidates(
-        self, body: MatchRunRequest
-    ) -> list[dict]:
+    async def _fetch_candidates(self, body: MatchRunRequest) -> list[dict]:
         """Загрузить кандидатов для скоринга."""
         if body.candidate_ids is not None:
             return await self._client.get_candidates_bulk(body.candidate_ids)
@@ -262,7 +250,7 @@ def _to_result_data(
 ) -> MatchResultData:
     """Преобразовать ORM-модель результата в Pydantic-схему."""
     explanations = []
-    for e in (result.explanations or []):
+    for e in result.explanations or []:
         explanations.append(
             ExplanationData(
                 factor=e.factor,

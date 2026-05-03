@@ -33,10 +33,16 @@ class SearchService:
     ) -> tuple[list[CandidateSearchData], int]:
         """Поиск кандидатов с фильтрами."""
         rows, total = await repo.search_candidates(
-            q=q, skills=skills, grade=grade, location=location,
-            experience_min=experience_min, experience_max=experience_max,
-            salary_min=salary_min, salary_max=salary_max,
-            limit=limit, offset=offset,
+            q=q,
+            skills=skills,
+            grade=grade,
+            location=location,
+            experience_min=experience_min,
+            experience_max=experience_max,
+            salary_min=salary_min,
+            salary_max=salary_max,
+            limit=limit,
+            offset=offset,
         )
         data = [_to_candidate_data(cand, prof) for cand, prof in rows]
         return data, total
@@ -53,9 +59,12 @@ class SearchService:
     ) -> tuple[list[VacancySearchData], int]:
         """Поиск вакансий с фильтрами."""
         vacancies, total = await repo.search_vacancies(
-            status=status, department=department,
-            grade=grade, location=location,
-            limit=limit, offset=offset,
+            status=status,
+            department=department,
+            grade=grade,
+            location=location,
+            limit=limit,
+            offset=offset,
         )
         data = [_to_vacancy_data(v) for v in vacancies]
         return data, total
@@ -71,15 +80,16 @@ class SearchService:
     ) -> tuple[list[MatchSearchData], int]:
         """Поиск результатов матчинга."""
         rows, total = await repo.search_matches(
-            vacancy_id=vacancy_id, min_score=min_score,
-            grade=grade, limit=limit, offset=offset,
+            vacancy_id=vacancy_id,
+            min_score=min_score,
+            grade=grade,
+            limit=limit,
+            offset=offset,
         )
         data = [_to_match_data(mr, cand, vac) for mr, cand, vac in rows]
         return data, total
 
-    async def get_summary(
-        self, repo: SearchRepository
-    ) -> SummaryData:
+    async def get_summary(self, repo: SearchRepository) -> SummaryData:
         """Получить агрегированную статистику."""
         raw = await repo.get_summary()
         return SummaryData(
@@ -88,7 +98,7 @@ class SearchService:
             total_matches=raw["total_matches"],
             grades=[GradeCount(**g) for g in raw["grades"]],
             top_skills=[SkillCount(**s) for s in raw["top_skills"]],
-            locations=[LocationCount(**l) for l in raw["locations"]],
+            locations=[LocationCount(**item) for item in raw["locations"]],
         )
 
 
@@ -102,9 +112,14 @@ def _to_candidate_data(candidate, profile) -> CandidateSearchData:
         skills=profile.skills if profile else [],
         grade=profile.grade if profile else None,
         location=profile.location if profile else None,
-        experience_years=float(profile.experience_years) if profile and profile.experience_years else None,
+        experience_years=(
+            float(profile.experience_years)
+            if profile and profile.experience_years
+            else None
+        ),
         salary_expectation=profile.salary_expectation if profile else None,
     )
+
 
 def _to_vacancy_data(vacancy) -> VacancySearchData:
     """Преобразовать ORM-модель вакансии в схему поиска."""
@@ -119,6 +134,7 @@ def _to_vacancy_data(vacancy) -> VacancySearchData:
         status=vacancy.status,
         requirements_count=len(vacancy.requirements) if vacancy.requirements else 0,
     )
+
 
 def _to_match_data(match_result, candidate, vacancy) -> MatchSearchData:
     """Преобразовать результат матчинга в схему поиска."""

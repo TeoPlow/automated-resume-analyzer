@@ -21,7 +21,7 @@ def create_router(
     proxy_service: ProxyService,
     rate_limiter: SlidingWindowRateLimiter,
 ) -> APIRouter:
-    """Создать catch-all роутер для проксирования в микросервисы."""
+    """Создать роутер для проксирования в микросервисы"""
     router = APIRouter(tags=["proxy"])
     bearer_scheme = HTTPBearer(auto_error=False)
     api_key_scheme = APIKeyHeader(name="X-API-Key", auto_error=False)
@@ -33,7 +33,7 @@ def create_router(
         ],
         api_key: Annotated[str | None, Security(api_key_scheme)],
     ) -> MeData:
-        """Аутентифицировать актора по Bearer-токену или API-ключу."""
+        """Аутентифицировать актора по Bearer-токену или API-ключу"""
         authorization = None
         if bearer:
             authorization = f"{bearer.scheme} {bearer.credentials}"
@@ -48,7 +48,7 @@ def create_router(
         path: str,
         actor: MeData,
     ) -> Response:
-        """Проксировать запрос в сервис с проверкой лимитов и авторизации."""
+        """Проксировать запрос в сервис с проверкой лимитов и авторизации"""
         client_key = rate_limiter.extract_client_key(request)
         if not await rate_limiter.check(client_key):
             raise AppError(
@@ -68,7 +68,10 @@ def create_router(
         service: str,
         actor: MeData = Depends(authenticate_actor),
     ) -> Response:
-        """Проксировать запросы на корневой путь сервиса (/profiles, /vacancies и т.д.)."""
+        """Проксировать запросы на корневой путь сервиса.
+
+        Например: /profiles, /vacancies и т.д.
+        """
         return await proxy_request(request, service, "", actor)
 
     @router.api_route(
@@ -81,10 +84,7 @@ def create_router(
         path: str,
         actor: MeData = Depends(authenticate_actor),
     ) -> Response:
-        """Проксировать запрос в соответствующий микросервис.
-
-        Выполняет rate-limit проверку, аутентификацию и пересылку.
-        """
+        """Проксировать запрос в соответствующий микросервис"""
         return await proxy_request(request, service, path, actor)
 
     return router

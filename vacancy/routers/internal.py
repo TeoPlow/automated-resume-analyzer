@@ -52,9 +52,7 @@ def create_router(config: VacancyConfig, db: Database) -> APIRouter:
             repo = VacancyRepository(session)
             vacancies = await repo.get_bulk(uuids)
 
-        return BaseResponse(
-            data=[_to_vacancy_data(v) for v in vacancies]
-        )
+        return BaseResponse(data=[_to_vacancy_data(v) for v in vacancies])
 
     return router
 

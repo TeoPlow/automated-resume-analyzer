@@ -113,7 +113,6 @@ class ProxyService:
         """Закрыть HTTP-клиент."""
         await self._client.aclose()
 
-
     def _resolve_service(self, service_key: str) -> str:
         """Определить имя сервиса по ключу из URL."""
         service = self.SERVICE_MAP.get(service_key)
@@ -125,9 +124,7 @@ class ProxyService:
             )
         return service
 
-    def _build_headers(
-        self, request: Request, actor: MeData
-    ) -> dict[str, str]:
+    def _build_headers(self, request: Request, actor: MeData) -> dict[str, str]:
         """Собрать заголовки для downstream-запроса с данными актора."""
         headers: dict[str, str] = {}
 

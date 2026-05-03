@@ -20,7 +20,7 @@ from gateway.services.auth_service import AuthService
 
 
 def create_router(auth_service: AuthService) -> APIRouter:
-    """Создать роутер для управления интеграционными ключами."""
+    """Создать роутер для управления интеграционными ключами"""
     router = APIRouter(prefix="/integrations/keys", tags=["integrations"])
     bearer_scheme = HTTPBearer(auto_error=False)
     api_key_scheme = APIKeyHeader(name="X-API-Key", auto_error=False)
@@ -32,7 +32,7 @@ def create_router(auth_service: AuthService) -> APIRouter:
         ],
         api_key: Annotated[str | None, Security(api_key_scheme)],
     ) -> MeData:
-        """Аутентифицировать актора по Bearer-токену или API-ключу."""
+        """Аутентифицировать актора по Bearer-токену или API-ключу"""
         authorization = None
         if bearer:
             authorization = f"{bearer.scheme} {bearer.credentials}"
@@ -46,18 +46,16 @@ def create_router(auth_service: AuthService) -> APIRouter:
         body: IntegrationKeyCreateRequest,
         actor: MeData = Depends(authenticate_actor),
     ) -> BaseResponse[IntegrationKeyCreateData]:
-        """Создать новый API-ключ для внешней интеграции."""
+        """Создать новый API-ключ для внешней интеграции"""
         _require_admin(actor)
-        result = await auth_service.create_integration_key(
-            body.name, body.permissions
-        )
+        result = await auth_service.create_integration_key(body.name, body.permissions)
         return BaseResponse(data=result)
 
     @router.get("")
     async def list_keys(
         actor: MeData = Depends(authenticate_actor),
     ) -> BaseResponse[list[IntegrationKeyInfo]]:
-        """Получить список всех API-ключей."""
+        """Получить список всех API-ключей"""
         _require_admin(actor)
         keys = await auth_service.list_integration_keys()
         return BaseResponse(data=keys)
@@ -67,7 +65,7 @@ def create_router(auth_service: AuthService) -> APIRouter:
         key_id: str,
         actor: MeData = Depends(authenticate_actor),
     ) -> BaseResponse[IntegrationKeyCreateData]:
-        """Ротировать ключ: отозвать старый, создать новый с тем же именем."""
+        """Переиздать ключ: отозвать старый, создать новый с тем же именем"""
         _require_admin(actor)
         result = await auth_service.rotate_integration_key(key_id)
         return BaseResponse(data=result)
@@ -77,7 +75,7 @@ def create_router(auth_service: AuthService) -> APIRouter:
         key_id: str,
         actor: MeData = Depends(authenticate_actor),
     ) -> None:
-        """Отозвать (деактивировать) API-ключ интеграции."""
+        """Отозвать API-ключ интеграции"""
         _require_admin(actor)
         await auth_service.revoke_integration_key(key_id)
 
@@ -85,7 +83,7 @@ def create_router(auth_service: AuthService) -> APIRouter:
 
 
 def _require_admin(actor: MeData) -> None:
-    """Проверить, что текущий пользователь имеет право integrations:manage."""
+    """Проверить, что текущий пользователь имеет права администратора"""
     if "integrations:manage" not in actor.permissions:
         raise AppError(
             code="forbidden",

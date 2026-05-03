@@ -57,9 +57,7 @@ class ProfileRepository:
         stmt = update(Resume).where(Resume.id == resume_id).values(**values)
         await self._session.execute(stmt)
 
-    async def get_candidate(
-        self, candidate_id: uuid.UUID
-    ) -> Candidate | None:
+    async def get_candidate(self, candidate_id: uuid.UUID) -> Candidate | None:
         """Получить кандидата по ID с профилем и резюме."""
         return await self._session.get(Candidate, candidate_id)
 
@@ -101,17 +99,11 @@ class ProfileRepository:
         if not values:
             return await self.get_candidate(candidate_id)
         values["updated_at"] = datetime.now(timezone.utc)
-        stmt = (
-            update(Candidate)
-            .where(Candidate.id == candidate_id)
-            .values(**values)
-        )
+        stmt = update(Candidate).where(Candidate.id == candidate_id).values(**values)
         await self._session.execute(stmt)
         return await self.get_candidate(candidate_id)
 
-    async def get_candidate_resumes(
-        self, candidate_id: uuid.UUID
-    ) -> list[Resume]:
+    async def get_candidate_resumes(self, candidate_id: uuid.UUID) -> list[Resume]:
         """Получить все резюме кандидата."""
         stmt = (
             select(Resume)
@@ -121,9 +113,7 @@ class ProfileRepository:
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_parsed_resumes(
-        self, candidate_id: uuid.UUID
-    ) -> list[Resume]:
+    async def get_parsed_resumes(self, candidate_id: uuid.UUID) -> list[Resume]:
         """Получить все успешно распарсенные резюме кандидата."""
         stmt = (
             select(Resume)

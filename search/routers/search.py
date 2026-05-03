@@ -46,11 +46,17 @@ def create_router(
         async with db.session() as session:
             repo = SearchRepository(session)
             data, total = await service.search_candidates(
-                repo, q=q, skills=skill_list, grade=grade,
-                location=location, experience_min=experience_years_min,
+                repo,
+                q=q,
+                skills=skill_list,
+                grade=grade,
+                location=location,
+                experience_min=experience_years_min,
                 experience_max=experience_years_max,
-                salary_min=salary_min, salary_max=salary_max,
-                limit=limit, offset=offset,
+                salary_min=salary_min,
+                salary_max=salary_max,
+                limit=limit,
+                offset=offset,
             )
         return BaseResponse(
             data=data,
@@ -75,9 +81,13 @@ def create_router(
         async with db.session() as session:
             repo = SearchRepository(session)
             data, total = await service.search_vacancies(
-                repo, status=status, department=department,
-                grade=grade, location=location,
-                limit=limit, offset=offset,
+                repo,
+                status=status,
+                department=department,
+                grade=grade,
+                location=location,
+                limit=limit,
+                offset=offset,
             )
         return BaseResponse(
             data=data,
@@ -101,8 +111,12 @@ def create_router(
         async with db.session() as session:
             repo = SearchRepository(session)
             data, total = await service.search_matches(
-                repo, vacancy_id=vacancy_id, min_score=min_score,
-                grade=grade, limit=limit, offset=offset,
+                repo,
+                vacancy_id=vacancy_id,
+                min_score=min_score,
+                grade=grade,
+                limit=limit,
+                offset=offset,
             )
         return BaseResponse(
             data=data,

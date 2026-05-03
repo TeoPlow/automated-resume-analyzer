@@ -98,9 +98,7 @@ class MatchingRepository:
         await self._session.flush()
         return explanation
 
-    async def get_results_by_run(
-        self, run_id: uuid.UUID
-    ) -> list[MatchResult]:
+    async def get_results_by_run(self, run_id: uuid.UUID) -> list[MatchResult]:
         """Получить все результаты запуска матчинга."""
         stmt = (
             select(MatchResult)

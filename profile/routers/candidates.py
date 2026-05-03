@@ -34,9 +34,7 @@ def create_router(db: Database) -> APIRouter:
 
         async with db.session() as session:
             repo = ProfileRepository(session)
-            candidate = await repo.get_candidate(
-                _parse_uuid(candidate_id)
-            )
+            candidate = await repo.get_candidate(_parse_uuid(candidate_id))
 
         if not candidate:
             raise AppError(
@@ -85,13 +83,9 @@ def create_router(db: Database) -> APIRouter:
 
         async with db.session() as session:
             repo = ProfileRepository(session)
-            resumes = await repo.get_candidate_resumes(
-                _parse_uuid(candidate_id)
-            )
+            resumes = await repo.get_candidate_resumes(_parse_uuid(candidate_id))
 
-        return BaseResponse(
-            data=[_to_resume_data(r) for r in resumes]
-        )
+        return BaseResponse(data=[_to_resume_data(r) for r in resumes])
 
     @router.delete("/{candidate_id}", status_code=204)
     async def delete_candidate(

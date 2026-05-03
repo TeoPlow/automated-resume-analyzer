@@ -66,7 +66,9 @@ class CandidateScorer:
 
         explanations = [
             _make_explanation("skills", skill_detail, skill_score, weights["skills"]),
-            _make_explanation("experience", exp_detail, exp_score, weights["experience"]),
+            _make_explanation(
+                "experience", exp_detail, exp_score, weights["experience"]
+            ),
             _make_explanation("grade", grade_detail, grade_score, weights["grade"]),
             _make_explanation("location", loc_detail, loc_score, weights["location"]),
             _make_explanation("salary", sal_detail, sal_score, weights["salary"]),
@@ -116,14 +118,15 @@ class CandidateScorer:
                     )
 
             score = (matched / len(required_skills)) * 100
-            detail = (
-                f"Совпадение: {matched}/{len(required_skills)}. "
-                + "; ".join(matched_skills[:5])
+            detail = f"Совпадение: {matched}/{len(required_skills)}. " + "; ".join(
+                matched_skills[:5]
             )
             return round(score, 2), detail
 
         except Exception as exc:
-            logger.warning("Ошибка embedding-скоринга: %s, fallback на exact match", exc)
+            logger.warning(
+                "Ошибка embedding-скоринга: %s, fallback на exact match", exc
+            )
             return self._score_skills_exact(candidate_skills, required_skills)
 
     def _score_skills_exact(
@@ -153,7 +156,10 @@ class CandidateScorer:
             if r.get("min_experience_years")
         ]
         if not min_years_list:
-            return 80.0, f"Требования к опыту не указаны, у кандидата {candidate_years} лет"
+            return (
+                80.0,
+                f"Требования к опыту не указаны, у кандидата {candidate_years} лет",
+            )
 
         avg_required = sum(min_years_list) / len(min_years_list)
         if candidate_years >= avg_required:

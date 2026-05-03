@@ -18,9 +18,7 @@ class TextExtractor:
         if not extractor:
             raise ValueError(f"Неподдерживаемый формат: {extension}")
         text = extractor(content)
-        logger.info(
-            "Извлечено %d символов из .%s файла", len(text), extension
-        )
+        logger.info("Извлечено %d символов из .%s файла", len(text), extension)
         return text
 
     # --- Приватные методы ---

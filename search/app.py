@@ -40,6 +40,4 @@ app.add_middleware(RequestIdMiddleware)
 register_error_handlers(app)
 
 app.include_router(make_health_router("search"))
-app.include_router(
-    search.create_router(config=config, db=db, service=search_service)
-)
+app.include_router(search.create_router(config=config, db=db, service=search_service))

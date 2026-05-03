@@ -51,7 +51,10 @@ def _candidate_seed_data() -> list[dict[str, Any]]:
             "salary_expectation": 140000,
             "skills": ["Python", "Flask", "SQL", "Git", "Linux"],
             "desired_position": "Junior Backend Developer",
-            "summary": "Junior engineer with strong motivation and API development practice.",
+            "summary": (
+                "Junior engineer with strong motivation and API "
+                "development practice."
+            ),
         },
         {
             "full_name": "Maria Volkova",
@@ -92,10 +95,30 @@ def _vacancy_seed_data() -> list[dict[str, Any]]:
             "salary_max": 360000,
             "status": "open",
             "requirements": [
-                {"skill": "Python", "category": "hard", "priority": "required", "min_experience_years": 3.0},
-                {"skill": "FastAPI", "category": "hard", "priority": "required", "min_experience_years": 2.0},
-                {"skill": "PostgreSQL", "category": "hard", "priority": "preferred", "min_experience_years": 2.0},
-                {"skill": "Docker", "category": "tool", "priority": "preferred", "min_experience_years": 1.0},
+                {
+                    "skill": "Python",
+                    "category": "hard",
+                    "priority": "required",
+                    "min_experience_years": 3.0,
+                },
+                {
+                    "skill": "FastAPI",
+                    "category": "hard",
+                    "priority": "required",
+                    "min_experience_years": 2.0,
+                },
+                {
+                    "skill": "PostgreSQL",
+                    "category": "hard",
+                    "priority": "preferred",
+                    "min_experience_years": 2.0,
+                },
+                {
+                    "skill": "Docker",
+                    "category": "tool",
+                    "priority": "preferred",
+                    "min_experience_years": 1.0,
+                },
             ],
         },
         {
@@ -108,15 +131,38 @@ def _vacancy_seed_data() -> list[dict[str, Any]]:
             "salary_max": 260000,
             "status": "open",
             "requirements": [
-                {"skill": "React", "category": "hard", "priority": "required", "min_experience_years": 1.5},
-                {"skill": "TypeScript", "category": "hard", "priority": "required", "min_experience_years": 1.0},
-                {"skill": "Node.js", "category": "hard", "priority": "nice_to_have", "min_experience_years": 1.0},
-                {"skill": "Docker", "category": "tool", "priority": "nice_to_have", "min_experience_years": None},
+                {
+                    "skill": "React",
+                    "category": "hard",
+                    "priority": "required",
+                    "min_experience_years": 1.5,
+                },
+                {
+                    "skill": "TypeScript",
+                    "category": "hard",
+                    "priority": "required",
+                    "min_experience_years": 1.0,
+                },
+                {
+                    "skill": "Node.js",
+                    "category": "hard",
+                    "priority": "nice_to_have",
+                    "min_experience_years": 1.0,
+                },
+                {
+                    "skill": "Docker",
+                    "category": "tool",
+                    "priority": "nice_to_have",
+                    "min_experience_years": None,
+                },
             ],
         },
         {
             "title": "Data Engineer",
-            "description": "Build ETL pipelines and analytical data marts for hiring metrics.",
+            "description": (
+                "Build ETL pipelines and analytical data marts "
+                "for hiring metrics."
+            ),
             "department": "Data",
             "location": "Saint Petersburg",
             "grade": ["middle", "senior"],
@@ -124,15 +170,38 @@ def _vacancy_seed_data() -> list[dict[str, Any]]:
             "salary_max": 380000,
             "status": "draft",
             "requirements": [
-                {"skill": "SQL", "category": "hard", "priority": "required", "min_experience_years": 3.0},
-                {"skill": "Airflow", "category": "tool", "priority": "preferred", "min_experience_years": 1.0},
-                {"skill": "Python", "category": "hard", "priority": "required", "min_experience_years": 2.0},
-                {"skill": "Kafka", "category": "tool", "priority": "nice_to_have", "min_experience_years": None},
+                {
+                    "skill": "SQL",
+                    "category": "hard",
+                    "priority": "required",
+                    "min_experience_years": 3.0,
+                },
+                {
+                    "skill": "Airflow",
+                    "category": "tool",
+                    "priority": "preferred",
+                    "min_experience_years": 1.0,
+                },
+                {
+                    "skill": "Python",
+                    "category": "hard",
+                    "priority": "required",
+                    "min_experience_years": 2.0,
+                },
+                {
+                    "skill": "Kafka",
+                    "category": "tool",
+                    "priority": "nice_to_have",
+                    "min_experience_years": None,
+                },
             ],
         },
         {
             "title": "DevOps Engineer",
-            "description": "Improve CI/CD, observability and container platform reliability.",
+            "description": (
+                "Improve CI/CD, observability and container "
+                "platform reliability."
+            ),
             "department": "Infrastructure",
             "location": "Moscow",
             "grade": ["middle", "senior", "lead"],
@@ -140,10 +209,30 @@ def _vacancy_seed_data() -> list[dict[str, Any]]:
             "salary_max": 420000,
             "status": "open",
             "requirements": [
-                {"skill": "Kubernetes", "category": "tool", "priority": "required", "min_experience_years": 2.0},
-                {"skill": "CI/CD", "category": "hard", "priority": "required", "min_experience_years": 2.0},
-                {"skill": "Docker", "category": "tool", "priority": "required", "min_experience_years": 2.0},
-                {"skill": "Linux", "category": "hard", "priority": "preferred", "min_experience_years": 2.0},
+                {
+                    "skill": "Kubernetes",
+                    "category": "tool",
+                    "priority": "required",
+                    "min_experience_years": 2.0,
+                },
+                {
+                    "skill": "CI/CD",
+                    "category": "hard",
+                    "priority": "required",
+                    "min_experience_years": 2.0,
+                },
+                {
+                    "skill": "Docker",
+                    "category": "tool",
+                    "priority": "required",
+                    "min_experience_years": 2.0,
+                },
+                {
+                    "skill": "Linux",
+                    "category": "hard",
+                    "priority": "preferred",
+                    "min_experience_years": 2.0,
+                },
             ],
         },
     ]
@@ -274,10 +363,7 @@ async def seed_demo_data() -> None:
 
     await db.dispose()
 
-    print(
-        "Seed completed: "
-        f"{candidate_count} candidates, {vacancy_count} vacancies"
-    )
+    print("Seed completed: " f"{candidate_count} candidates, {vacancy_count} vacancies")
 
 
 if __name__ == "__main__":

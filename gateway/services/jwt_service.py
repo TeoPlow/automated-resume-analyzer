@@ -78,7 +78,6 @@ class JwtService:
 
         return payload
 
-
     def _encode(self, payload: dict) -> str:
         """Собрать JWT-строку из payload."""
         header = {"alg": "HS256", "typ": "JWT"}

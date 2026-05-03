@@ -92,9 +92,7 @@ def create_router(db: Database, service: VacancyService) -> APIRouter:
 
         return BaseResponse(
             data=items,
-            pagination=PaginationData(
-                limit=limit, offset=offset, total=total
-            ),
+            pagination=PaginationData(limit=limit, offset=offset, total=total),
         )
 
     @router.delete("/{vacancy_id}", status_code=204)

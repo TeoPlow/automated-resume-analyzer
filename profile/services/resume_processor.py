@@ -64,9 +64,7 @@ class ResumeProcessor:
             await self._aggregate_profile(candidate_id, repo)
             await repo.commit()
 
-            logger.info(
-                "Резюме %s обработано → кандидат %s", resume_id, candidate_id
-            )
+            logger.info("Резюме %s обработано → кандидат %s", resume_id, candidate_id)
         except Exception as exc:
             logger.error("Ошибка обработки резюме %s: %s", resume_id, exc)
             await repo.update_resume_status(
@@ -76,9 +74,7 @@ class ResumeProcessor:
 
     # --- Приватные методы ---
 
-    async def _deduplicate(
-        self, parsed_data, repo: ProfileRepository
-    ) -> uuid.UUID:
+    async def _deduplicate(self, parsed_data, repo: ProfileRepository) -> uuid.UUID:
         """Найти существующего кандидата или создать нового."""
         email = parsed_data.contacts.email
         if email:

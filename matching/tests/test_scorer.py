@@ -183,7 +183,9 @@ class TestMakeExplanation:
 class TestCompositeScore:
     """Тесты финального скоринга (без embedding, через exact match fallback)."""
 
-    def test_ideal_candidate(self, scorer, sample_vacancy, sample_candidate, default_weights):
+    def test_ideal_candidate(
+        self, scorer, sample_vacancy, sample_candidate, default_weights
+    ):
         final, scores, explanations = scorer.score(
             sample_candidate, sample_vacancy, default_weights
         )

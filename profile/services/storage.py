@@ -43,9 +43,7 @@ class FileStorage:
 
     def download(self, file_key: str) -> bytes:
         """Скачать файл из хранилища по ключу."""
-        response = self._client.get_object(
-            Bucket=self._bucket, Key=file_key
-        )
+        response = self._client.get_object(Bucket=self._bucket, Key=file_key)
         return response["Body"].read()
 
     # --- Приватные методы ---

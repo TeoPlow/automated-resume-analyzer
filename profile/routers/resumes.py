@@ -104,9 +104,7 @@ def create_router(
             data=ResumeStatusData(
                 resume_id=str(resume.id),
                 candidate_id=(
-                    str(resume.candidate_id)
-                    if resume.candidate_id
-                    else None
+                    str(resume.candidate_id) if resume.candidate_id else None
                 ),
                 status=resume.status,
                 error_detail=resume.error_detail,

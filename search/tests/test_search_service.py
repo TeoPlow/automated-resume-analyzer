@@ -161,9 +161,7 @@ class TestSchemas:
         assert data.grade is None
 
     def test_vacancy_search_data_defaults(self):
-        data = VacancySearchData(
-            id="1", title="Dev", location="MSK", status="open"
-        )
+        data = VacancySearchData(id="1", title="Dev", location="MSK", status="open")
 
         assert data.grade == []
         assert data.requirements_count == 0

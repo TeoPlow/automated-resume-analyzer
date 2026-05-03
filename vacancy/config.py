@@ -12,9 +12,7 @@ class VacancyConfig:
     DB_ECHO: bool = os.getenv("DB_ECHO", "false").lower() == "true"
 
     # RabbitMQ
-    RABBITMQ_URL: str = os.getenv(
-        "RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/"
-    )
+    RABBITMQ_URL: str = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")
     EXCHANGE_NAME: str = os.getenv("EXCHANGE_NAME", "ara.events")
     DLX_NAME: str = os.getenv("DLX_NAME", "ara.events.dlx")
 

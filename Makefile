@@ -8,7 +8,7 @@ else
 VENV_PYTHON := $(VENV_DIR)/bin/python
 endif
 
-.PHONY: start run demo seed-demo clean down test install-requirements help
+.PHONY: start run demo seed-demo clean down test install-requirements format check help
 
 help:
 	@echo "Available targets:"
@@ -20,6 +20,8 @@ help:
 	@echo "  make clean                - stop stack and remove volumes"
 	@echo "  make down                 - stop stack without removing volumes"
 	@echo "  make test                 - run pytest using .venv"
+	@echo "  make format               - format code with black"
+	@echo "  make check                - check code style against PEP8 (pycodestyle)"
 
 $(VENV_PYTHON):
 	$(PYTHON) -m venv $(VENV_DIR)
@@ -56,3 +58,9 @@ down:
 
 test: install-requirements
 	$(VENV_PYTHON) -m pytest -q
+
+format: install-requirements
+	$(VENV_PYTHON) -m black .
+
+check: install-requirements
+	$(VENV_PYTHON) -m pycodestyle --max-line-length=88 common gateway matching profile search scripts conftest.py
