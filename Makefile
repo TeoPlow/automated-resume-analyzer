@@ -8,7 +8,7 @@ else
 VENV_PYTHON := $(VENV_DIR)/bin/python
 endif
 
-.PHONY: start run demo seed-demo clean down test coverage install-requirements format check help
+.PHONY: start run demo seed-demo clean down test coverage coverage-all install-requirements format check help
 
 help:
 	@echo "Available targets:"
@@ -61,6 +61,9 @@ test: install-requirements
 	$(VENV_PYTHON) -m pytest -q
 
 coverage: install-requirements
+	$(VENV_PYTHON) -m pytest gateway/tests -q --cov=gateway --cov-report=term-missing
+
+coverage-all: install-requirements
 	$(VENV_PYTHON) -m pytest -q --cov=. --cov-report=term-missing
 
 format: install-requirements

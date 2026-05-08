@@ -160,8 +160,7 @@ def _vacancy_seed_data() -> list[dict[str, Any]]:
         {
             "title": "Data Engineer",
             "description": (
-                "Build ETL pipelines and analytical data marts "
-                "for hiring metrics."
+                "Build ETL pipelines and analytical data marts " "for hiring metrics."
             ),
             "department": "Data",
             "location": "Saint Petersburg",
@@ -199,8 +198,7 @@ def _vacancy_seed_data() -> list[dict[str, Any]]:
         {
             "title": "DevOps Engineer",
             "description": (
-                "Improve CI/CD, observability and container "
-                "platform reliability."
+                "Improve CI/CD, observability and container " "platform reliability."
             ),
             "department": "Infrastructure",
             "location": "Moscow",

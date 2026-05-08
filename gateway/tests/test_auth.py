@@ -6,14 +6,10 @@ pytestmark = pytest.mark.asyncio
 class TestLogin:
 
     async def test_login_with_valid_credentials_returns_tokens(
-        self, client, admin_credentials
+        self, client, admin_credentials, gateway_login_response
     ):
         username, password = admin_credentials
-
-        response = await client.post(
-            "/api/v1/auth/login",
-            json={"username": username, "password": password},
-        )
+        response = await gateway_login_response(username, password)
 
         assert response.status_code == 200
         data = response.json()["data"]
@@ -39,17 +35,10 @@ class TestLogin:
         assert response.status_code == 401
 
     async def test_login_hr_user_has_no_integrations_manage(
-        self, client, hr_credentials
+        self, client, hr_credentials, gateway_login
     ):
         username, password = hr_credentials
-
-        response = await client.post(
-            "/api/v1/auth/login",
-            json={"username": username, "password": password},
-        )
-
-        assert response.status_code == 200
-        token = response.json()["data"]["access_token"]
+        token = await gateway_login(username, password)
         me_resp = await client.get(
             "/api/v1/me", headers={"Authorization": f"Bearer {token}"}
         )
@@ -58,13 +47,11 @@ class TestLogin:
 
 class TestMe:
 
-    async def test_me_with_valid_token_returns_actor(self, client, admin_credentials):
+    async def test_me_with_valid_token_returns_actor(
+        self, client, admin_credentials, gateway_login
+    ):
         username, password = admin_credentials
-        login_resp = await client.post(
-            "/api/v1/auth/login",
-            json={"username": username, "password": password},
-        )
-        token = login_resp.json()["data"]["access_token"]
+        token = await gateway_login(username, password)
 
         response = await client.get(
             "/api/v1/me", headers={"Authorization": f"Bearer {token}"}
@@ -84,13 +71,13 @@ class TestMe:
 
 class TestRefresh:
 
-    async def test_refresh_returns_new_token_pair(self, client, admin_credentials):
+    async def test_refresh_returns_new_token_pair(
+        self, client, admin_credentials, gateway_login_tokens
+    ):
         username, password = admin_credentials
-        login_resp = await client.post(
-            "/api/v1/auth/login",
-            json={"username": username, "password": password},
-        )
-        refresh_token = login_resp.json()["data"]["refresh_token"]
+        refresh_token = (await gateway_login_tokens(username, password))[
+            "refresh_token"
+        ]
 
         response = await client.post(
             "/api/v1/auth/refresh",
@@ -103,14 +90,12 @@ class TestRefresh:
         assert data["refresh_token"] != refresh_token
 
     async def test_refresh_with_reused_token_returns_401(
-        self, client, admin_credentials
+        self, client, admin_credentials, gateway_login_tokens
     ):
         username, password = admin_credentials
-        login_resp = await client.post(
-            "/api/v1/auth/login",
-            json={"username": username, "password": password},
-        )
-        refresh_token = login_resp.json()["data"]["refresh_token"]
+        refresh_token = (await gateway_login_tokens(username, password))[
+            "refresh_token"
+        ]
 
         await client.post(
             "/api/v1/auth/refresh",
@@ -125,14 +110,10 @@ class TestRefresh:
         assert response.status_code == 401
 
     async def test_refresh_with_access_token_returns_401(
-        self, client, admin_credentials
+        self, client, admin_credentials, gateway_login_tokens
     ):
         username, password = admin_credentials
-        login_resp = await client.post(
-            "/api/v1/auth/login",
-            json={"username": username, "password": password},
-        )
-        access_token = login_resp.json()["data"]["access_token"]
+        access_token = (await gateway_login_tokens(username, password))["access_token"]
 
         response = await client.post(
             "/api/v1/auth/refresh",
@@ -144,13 +125,13 @@ class TestRefresh:
 
 class TestLogout:
 
-    async def test_logout_invalidates_refresh_token(self, client, admin_credentials):
+    async def test_logout_invalidates_refresh_token(
+        self, client, admin_credentials, gateway_login_tokens
+    ):
         username, password = admin_credentials
-        login_resp = await client.post(
-            "/api/v1/auth/login",
-            json={"username": username, "password": password},
-        )
-        refresh_token = login_resp.json()["data"]["refresh_token"]
+        refresh_token = (await gateway_login_tokens(username, password))[
+            "refresh_token"
+        ]
 
         await client.post(
             "/api/v1/auth/logout",

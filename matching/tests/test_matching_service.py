@@ -6,11 +6,7 @@ import pytest
 
 from common.exceptions import AppError
 from matching.schemas.match import MatchRunRequest
-from matching.services.matching_service import (
-    MatchingService,
-    _parse_uuid,
-    _to_result_data,
-)
+from matching.services.matching_service import _parse_uuid, _to_result_data
 
 
 class TestParseUuid:
@@ -82,16 +78,8 @@ class TestToResultData:
 
 class TestWeightsResolution:
 
-    def test_default_weights(self, matching_config):
-        from matching.services.matching_service import MatchingService
-        from unittest.mock import MagicMock
-
-        service = MatchingService(
-            config=matching_config,
-            scorer=MagicMock(),
-            client=MagicMock(),
-            events=MagicMock(),
-        )
+    def test_default_weights(self, matching_service_factory):
+        service = matching_service_factory()
 
         weights = service._resolve_weights(None)
 
@@ -99,20 +87,16 @@ class TestWeightsResolution:
         assert weights["experience"] == 0.25
         assert abs(sum(weights.values()) - 1.0) < 0.001
 
-    def test_custom_weights(self, matching_config):
-        from matching.services.matching_service import MatchingService
+    def test_custom_weights(self, matching_service_factory):
         from matching.schemas.match import MatchWeights
-        from unittest.mock import MagicMock
 
-        service = MatchingService(
-            config=matching_config,
-            scorer=MagicMock(),
-            client=MagicMock(),
-            events=MagicMock(),
-        )
+        service = matching_service_factory()
         custom = MatchWeights(
-            skills=0.50, experience=0.20, grade=0.10,
-            location=0.10, salary=0.10,
+            skills=0.50,
+            experience=0.20,
+            grade=0.10,
+            location=0.10,
+            salary=0.10,
         )
 
         weights = service._resolve_weights(custom)
@@ -124,17 +108,12 @@ class TestWeightsResolution:
 @pytest.mark.asyncio
 class TestCandidateFetchStrategy:
 
-    async def test_fetch_candidates_with_ids_uses_bulk(self, matching_config):
+    async def test_fetch_candidates_with_ids_uses_bulk(self, matching_service_factory):
         client = MagicMock()
         client.get_candidates_bulk = AsyncMock(return_value=[{"id": "c1"}])
         client.get_active_candidates = AsyncMock(return_value=[{"id": "c2"}])
 
-        service = MatchingService(
-            config=matching_config,
-            scorer=MagicMock(),
-            client=client,
-            events=MagicMock(),
-        )
+        service = matching_service_factory(client=client)
         body = MatchRunRequest(
             vacancy_id="550e8400-e29b-41d4-a716-446655440000",
             candidate_ids=["660e8400-e29b-41d4-a716-446655440001"],
@@ -148,20 +127,15 @@ class TestCandidateFetchStrategy:
         )
         client.get_active_candidates.assert_not_awaited()
 
-    async def test_fetch_candidates_without_ids_uses_active(self, matching_config):
+    async def test_fetch_candidates_without_ids_uses_active(
+        self, matching_service_factory
+    ):
         client = MagicMock()
         client.get_candidates_bulk = AsyncMock(return_value=[])
         client.get_active_candidates = AsyncMock(return_value=[{"id": "c-active"}])
 
-        service = MatchingService(
-            config=matching_config,
-            scorer=MagicMock(),
-            client=client,
-            events=MagicMock(),
-        )
-        body = MatchRunRequest(
-            vacancy_id="550e8400-e29b-41d4-a716-446655440000"
-        )
+        service = matching_service_factory(client=client)
+        body = MatchRunRequest(vacancy_id="550e8400-e29b-41d4-a716-446655440000")
 
         result = await service._fetch_candidates(body)
 
@@ -173,13 +147,8 @@ class TestCandidateFetchStrategy:
 @pytest.mark.asyncio
 class TestForceRecomputeBehavior:
 
-    async def test_reuses_latest_run_when_force_false(self, matching_config):
-        service = MatchingService(
-            config=matching_config,
-            scorer=MagicMock(),
-            client=MagicMock(),
-            events=MagicMock(),
-        )
+    async def test_reuses_latest_run_when_force_false(self, matching_service_factory):
+        service = matching_service_factory()
 
         existing_id = uuid.UUID("550e8400-e29b-41d4-a716-446655440000")
         repo = MagicMock()
@@ -195,7 +164,7 @@ class TestForceRecomputeBehavior:
         assert result.status == "completed"
         repo.create_run.assert_not_awaited()
 
-    async def test_force_recompute_triggers_new_run(self, matching_config):
+    async def test_force_recompute_triggers_new_run(self, matching_service_factory):
         client = MagicMock()
         client.get_vacancy = AsyncMock(
             return_value={
@@ -211,12 +180,7 @@ class TestForceRecomputeBehavior:
         client.get_candidates_bulk = AsyncMock(return_value=[])
 
         events = MagicMock()
-        service = MatchingService(
-            config=matching_config,
-            scorer=MagicMock(),
-            client=client,
-            events=events,
-        )
+        service = matching_service_factory(client=client, events=events)
 
         run_id = uuid.UUID("550e8400-e29b-41d4-a716-446655440000")
         repo = MagicMock()
@@ -245,7 +209,9 @@ class TestForceRecomputeBehavior:
 @pytest.mark.asyncio
 class TestResultEnrichmentFallback:
 
-    async def test_load_candidate_names_uses_single_fetch_for_missing(self, matching_config):
+    async def test_load_candidate_names_uses_single_fetch_for_missing(
+        self, matching_service_factory
+    ):
         first_candidate_id = "660e8400-e29b-41d4-a716-446655440001"
         second_candidate_id = "660e8400-e29b-41d4-a716-446655440002"
         vacancy_id = "770e8400-e29b-41d4-a716-446655440010"
@@ -258,12 +224,7 @@ class TestResultEnrichmentFallback:
             return_value={"id": second_candidate_id, "full_name": "Пётр Петров"}
         )
 
-        service = MatchingService(
-            config=matching_config,
-            scorer=MagicMock(),
-            client=client,
-            events=MagicMock(),
-        )
+        service = matching_service_factory(client=client)
 
         results = [
             SimpleNamespace(
@@ -285,7 +246,9 @@ class TestResultEnrichmentFallback:
         )
         client.get_candidate.assert_awaited_once_with(second_candidate_id)
 
-    async def test_to_result_data_list_uses_fallback_for_missing_titles(self, matching_config):
+    async def test_to_result_data_list_uses_fallback_for_missing_titles(
+        self, matching_service_factory
+    ):
         candidate_id = "660e8400-e29b-41d4-a716-446655440003"
         vacancy_id = "770e8400-e29b-41d4-a716-446655440011"
         result_id = "550e8400-e29b-41d4-a716-446655440111"
@@ -300,12 +263,7 @@ class TestResultEnrichmentFallback:
             return_value={"id": vacancy_id, "title": "Python Developer"}
         )
 
-        service = MatchingService(
-            config=matching_config,
-            scorer=MagicMock(),
-            client=client,
-            events=MagicMock(),
-        )
+        service = matching_service_factory(client=client)
 
         result = SimpleNamespace(
             id=uuid.UUID(result_id),
