@@ -10,7 +10,7 @@ from matching.services.matching_service import MatchingService
 
 
 def create_router(db: Database, service: MatchingService) -> APIRouter:
-    """Создать роутер матчинга."""
+    """Создать роутер матчинга"""
     router = APIRouter(prefix="/api/v1/matching", tags=["matching"])
 
     @router.post("/run", response_model=BaseResponse[MatchRunData])
@@ -18,7 +18,7 @@ def create_router(db: Database, service: MatchingService) -> APIRouter:
         body: MatchRunRequest,
         actor: Actor = Depends(extract_actor),
     ) -> BaseResponse[MatchRunData]:
-        """Запустить матчинг кандидатов по вакансии."""
+        """Запустить матчинг кандидатов по вакансии"""
         require_permission(actor, "matching:run")
         async with db.session() as session:
             repo = MatchingRepository(session)
@@ -33,7 +33,7 @@ def create_router(db: Database, service: MatchingService) -> APIRouter:
         run_id: str,
         actor: Actor = Depends(extract_actor),
     ) -> BaseResponse[list[MatchResultData]]:
-        """Получить результаты матчинга по ID запуска."""
+        """Получить результаты матчинга по ID запуска"""
         require_permission(actor, "matching:read")
         async with db.session() as session:
             repo = MatchingRepository(session)
@@ -48,7 +48,7 @@ def create_router(db: Database, service: MatchingService) -> APIRouter:
         vacancy_id: str,
         actor: Actor = Depends(extract_actor),
     ) -> BaseResponse[list[MatchResultData]]:
-        """Получить лучших кандидатов для вакансии."""
+        """Получить лучших кандидатов для вакансии"""
         require_permission(actor, "matching:read")
         async with db.session() as session:
             repo = MatchingRepository(session)
@@ -63,7 +63,7 @@ def create_router(db: Database, service: MatchingService) -> APIRouter:
         candidate_id: str,
         actor: Actor = Depends(extract_actor),
     ) -> BaseResponse[list[MatchResultData]]:
-        """Получить подходящие вакансии для кандидата."""
+        """Получить подходящие вакансии для кандидата"""
         require_permission(actor, "matching:read")
         async with db.session() as session:
             repo = MatchingRepository(session)

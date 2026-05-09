@@ -11,7 +11,7 @@ logger = setup_logger("matching.events")
 
 
 class EventPublisher:
-    """Издатель событий матчинга в RabbitMQ (topic exchange)."""
+    """Издатель событий матчинга в RabbitMQ (topic exchange)"""
 
     def __init__(self, rabbitmq_url: str, exchange: str, dlx: str) -> None:
         self._rabbitmq_url = rabbitmq_url
@@ -21,7 +21,7 @@ class EventPublisher:
         self._channel: BlockingChannel | None = None
 
     def _is_alive(self) -> bool:
-        """Проверить, что соединение и канал живы."""
+        """Проверить, что соединение и канал живы"""
         return (
             self._connection is not None
             and self._connection.is_open
@@ -30,7 +30,7 @@ class EventPublisher:
         )
 
     def connect(self) -> None:
-        """Установить соединение с RabbitMQ и объявить exchange."""
+        """Установить соединение с RabbitMQ и объявить exchange"""
         self._safe_close()
         params = URLParameters(self._rabbitmq_url)
         params.heartbeat = 600
@@ -56,7 +56,7 @@ class EventPublisher:
         payload: dict,
         request_id: str | None = None,
     ) -> None:
-        """Опубликовать событие в exchange."""
+        """Опубликовать событие в exchange"""
         if not self._is_alive():
             logger.info("Переподключение к RabbitMQ (соединение неактивно)")
             self.connect()
@@ -82,7 +82,7 @@ class EventPublisher:
         logger.info("Событие опубликовано: %s", event_type)
 
     def _safe_close(self) -> None:
-        """Безопасно закрыть соединение (игнорируя ошибки)."""
+        """Безопасно закрыть соединение (игнорируя ошибки)"""
         try:
             if self._connection and self._connection.is_open:
                 self._connection.close()
@@ -92,6 +92,6 @@ class EventPublisher:
         self._channel = None
 
     def close(self) -> None:
-        """Закрыть соединение с RabbitMQ."""
+        """Закрыть соединение с RabbitMQ"""
         self._safe_close()
         logger.info("Соединение с RabbitMQ закрыто")

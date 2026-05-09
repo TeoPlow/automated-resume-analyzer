@@ -45,7 +45,7 @@ matching_service = MatchingService(
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
-    """Жизненный цикл: создание таблиц, подключение к RabbitMQ."""
+    """Жизненный цикл: создание таблиц, подключение к RabbitMQ"""
     await db.create_tables()
     event_publisher.connect()
     logger.info("Matching-сервис запущен на порту 8003")

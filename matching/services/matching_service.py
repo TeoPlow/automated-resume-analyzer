@@ -20,7 +20,7 @@ logger = setup_logger("matching.service")
 
 
 class MatchingService:
-    """Управление процессом матчинга: запуск, скоринг, публикация."""
+    """Управление процессом матчинга: запуск, скоринг, публикация"""
 
     def __init__(
         self,
@@ -39,7 +39,7 @@ class MatchingService:
         body: MatchRunRequest,
         repo: MatchingRepository,
     ) -> MatchRunData:
-        """Запустить матчинг: получить данные, рассчитать скоры, сохранить."""
+        """Запустить матчинг: получить данные, рассчитать скоры, сохранить"""
         vacancy_id = _parse_uuid(body.vacancy_id)
         weights = self._resolve_weights(body.weights)
 
@@ -130,7 +130,7 @@ class MatchingService:
     async def get_results(
         self, run_id: str, repo: MatchingRepository
     ) -> list[MatchResultData]:
-        """Получить результаты по ID запуска."""
+        """Получить результаты по ID запуска"""
         uid = _parse_uuid(run_id)
         results = await repo.get_results_by_run(uid)
         return await self._to_result_data_list(results)
@@ -138,7 +138,7 @@ class MatchingService:
     async def get_vacancy_results(
         self, vacancy_id: str, repo: MatchingRepository
     ) -> list[MatchResultData]:
-        """Получить лучших кандидатов по последнему запуску для вакансии."""
+        """Получить лучших кандидатов по последнему запуску для вакансии"""
         uid = _parse_uuid(vacancy_id)
         results = await repo.get_latest_results_by_vacancy(uid)
         return await self._to_result_data_list(results)
@@ -146,13 +146,13 @@ class MatchingService:
     async def get_candidate_vacancies(
         self, candidate_id: str, repo: MatchingRepository
     ) -> list[MatchResultData]:
-        """Получить подходящие вакансии для кандидата."""
+        """Получить подходящие вакансии для кандидата"""
         uid = _parse_uuid(candidate_id)
         results = await repo.get_results_by_candidate(uid)
         return await self._to_result_data_list(results)
 
     async def _to_result_data_list(self, results: list) -> list[MatchResultData]:
-        """Обогатить результаты именем кандидата и названием вакансии."""
+        """Обогатить результаты именем кандидата и названием вакансии"""
         if not results:
             return []
 
@@ -169,7 +169,7 @@ class MatchingService:
         ]
 
     async def _load_candidate_names(self, results: list) -> dict[str, str]:
-        """Загрузить ФИО кандидатов по списку результатов."""
+        """Загрузить ФИО кандидатов по списку результатов"""
         candidate_ids = sorted({str(r.candidate_id) for r in results})
         if not candidate_ids:
             return {}
@@ -188,7 +188,6 @@ class MatchingService:
             if cand_id and full_name:
                 names[cand_id] = full_name
 
-        # Добираем пропущенные записи точечно, чтобы не терять ФИО в ответе.
         missing_ids = [cid for cid in candidate_ids if cid not in names]
         for candidate_id in missing_ids:
             try:
@@ -208,7 +207,7 @@ class MatchingService:
         return names
 
     async def _load_vacancy_titles(self, results: list) -> dict[str, str]:
-        """Загрузить названия вакансий по списку результатов."""
+        """Загрузить названия вакансий по списку результатов"""
         vacancy_ids = sorted({str(r.vacancy_id) for r in results})
         if not vacancy_ids:
             return {}
@@ -246,7 +245,7 @@ class MatchingService:
         return titles
 
     def _resolve_weights(self, weights: MatchWeights | None) -> dict[str, float]:
-        """Получить веса: пользовательские или из конфигурации."""
+        """Получить веса: пользовательские или из конфигурации"""
         if weights:
             return weights.model_dump()
         return {
@@ -258,14 +257,14 @@ class MatchingService:
         }
 
     async def _fetch_candidates(self, body: MatchRunRequest) -> list[dict]:
-        """Загрузить кандидатов для скоринга."""
+        """Загрузить кандидатов для скоринга"""
         if body.candidate_ids is not None:
             return await self._client.get_candidates_bulk(body.candidate_ids)
         return await self._client.get_active_candidates()
 
     @staticmethod
     def _can_reuse_latest_run(body: MatchRunRequest) -> bool:
-        """Проверить, можно ли переиспользовать существующий completed run."""
+        """Проверить, можно ли переиспользовать существующий completed run"""
         return (
             not body.force_recompute
             and body.candidate_ids is None
@@ -275,7 +274,7 @@ class MatchingService:
 
 
 def _parse_uuid(value: str) -> uuid.UUID:
-    """Преобразовать строку в UUID."""
+    """Преобразовать строку в UUID"""
     try:
         return uuid.UUID(value)
     except ValueError:
@@ -291,7 +290,7 @@ def _to_result_data(
     candidate_name: str | None = None,
     vacancy_title: str | None = None,
 ) -> MatchResultData:
-    """Преобразовать ORM-модель результата в Pydantic-схему."""
+    """Преобразовать ORM-модель результата в Pydantic-схему"""
     explanations = []
     for e in result.explanations or []:
         explanations.append(

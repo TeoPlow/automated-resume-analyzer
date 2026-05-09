@@ -6,19 +6,16 @@ _GRADE_ORDER = {"intern": 0, "junior": 1, "middle": 2, "senior": 3, "lead": 4}
 
 
 class CandidateScorer:
-    """Вычисление composite-скоринга кандидата по вакансии.
+    """Вычисление composite-скоринга кандидата по вакансии"""
 
-    Факторы:
-    - skills: семантическое сходство навыков (cosine similarity)
-    - experience: соответствие опыта требованиям
-    - grade: соответствие грейда
-    - location: совпадение локации
-    - salary: попадание в зарплатную вилку
-    """
-
-    def __init__(self, embedding_model_name: str) -> None:
+    def __init__(self, embedding_model_name: str, config=None) -> None:
         self._model_name = embedding_model_name
         self._model = None
+        if config is None:
+            from matching.config import MatchingConfig
+
+            config = MatchingConfig()
+        self._config = config
 
     def score(
         self,
@@ -26,10 +23,7 @@ class CandidateScorer:
         vacancy: dict,
         weights: dict[str, float],
     ) -> tuple[float, dict[str, float], list[dict]]:
-        """Рассчитать итоговый скоринг кандидата.
-
-        Возвращает (final_score, factor_scores, explanations).
-        """
+        """Рассчитать итоговый скоринг кандидата"""
         profile = candidate.get("profile") or {}
 
         skill_score, skill_detail = self._score_skills(
@@ -76,10 +70,8 @@ class CandidateScorer:
 
         return round(final, 2), scores, explanations
 
-    # --- Приватные методы ---
-
     def _get_model(self):
-        """Ленивая загрузка embedding-модели."""
+        """Ленивая загрузка embedding-модели"""
         if self._model is None:
             from sentence_transformers import SentenceTransformer
 
@@ -92,7 +84,7 @@ class CandidateScorer:
         candidate_skills: list[str],
         required_skills: list[str],
     ) -> tuple[float, str]:
-        """Оценить навыки через семантическое сходство."""
+        """Оценить навыки через семантическое сходство"""
         if not required_skills:
             return 100.0, "Требования к навыкам не указаны"
         if not candidate_skills:
@@ -110,7 +102,7 @@ class CandidateScorer:
             matched_skills = []
             for i, req_skill in enumerate(required_skills):
                 max_sim = float(similarity_matrix[i].max())
-                if max_sim >= 0.6:
+                if max_sim >= self._config.SKILL_SIMILARITY_THRESHOLD:
                     matched += 1
                     best_idx = int(similarity_matrix[i].argmax())
                     matched_skills.append(
@@ -134,7 +126,7 @@ class CandidateScorer:
         candidate_skills: list[str],
         required_skills: list[str],
     ) -> tuple[float, str]:
-        """Fallback: точное совпадение навыков (без embeddings)."""
+        """Fallback: точное совпадение навыков (без embeddings)"""
         cand_lower = {s.lower().strip() for s in candidate_skills}
         matched = [s for s in required_skills if s.lower().strip() in cand_lower]
         score = (len(matched) / len(required_skills)) * 100 if required_skills else 100
@@ -146,9 +138,12 @@ class CandidateScorer:
         candidate_years: float | None,
         requirements: list[dict],
     ) -> tuple[float, str]:
-        """Оценить опыт кандидата относительно требований."""
+        """Оценить опыт кандидата относительно требований"""
         if candidate_years is None:
-            return 50.0, "Опыт кандидата не указан"
+            return (
+                self._config.DEFAULT_EXPERIENCE_UNKNOWN_SCORE,
+                "Опыт кандидата не указан",
+            )
 
         min_years_list: list[float] = [
             float(r["min_experience_years"])
@@ -157,13 +152,16 @@ class CandidateScorer:
         ]
         if not min_years_list:
             return (
-                80.0,
+                self._config.DEFAULT_NO_EXPERIENCE_REQUIREMENTS_SCORE,
                 f"Требования к опыту не указаны, у кандидата {candidate_years} лет",
             )
 
         avg_required = sum(min_years_list) / len(min_years_list)
         if candidate_years >= avg_required:
-            return 100.0, f"{candidate_years} лет ≥ требуемых {avg_required:.1f}"
+            return (
+                self._config.SALARY_WITHIN_SCORE,
+                f"{candidate_years} лет ≥ требуемых {avg_required:.1f}",
+            )
 
         ratio = candidate_years / avg_required if avg_required > 0 else 0
         score = max(ratio * 100, 0)
@@ -175,24 +173,36 @@ class CandidateScorer:
         candidate_grade: str | None,
         vacancy_grades: list[str],
     ) -> tuple[float, str]:
-        """Оценить соответствие грейда кандидата вакансии."""
+        """Оценить соответствие грейда кандидата вакансии"""
         if not vacancy_grades:
-            return 80.0, "Грейд вакансии не указан"
+            return (
+                self._config.DEFAULT_GRADE_VACANCY_UNKNOWN_SCORE,
+                "Грейд вакансии не указан",
+            )
         if not candidate_grade:
-            return 50.0, "Грейд кандидата не определён"
+            return (
+                self._config.DEFAULT_GRADE_UNKNOWN_SCORE,
+                "Грейд кандидата не определён",
+            )
 
         cand_lvl = _GRADE_ORDER.get(candidate_grade.lower(), -1)
         vacancy_levels = [_GRADE_ORDER.get(g.lower(), -1) for g in vacancy_grades]
         vacancy_levels = [v for v in vacancy_levels if v >= 0]
 
         if not vacancy_levels:
-            return 80.0, f"Грейд вакансии не распознан: {vacancy_grades}"
+            return (
+                self._config.DEFAULT_GRADE_VACANCY_UNKNOWN_SCORE,
+                f"Грейд вакансии не распознан: {vacancy_grades}",
+            )
 
         if cand_lvl in vacancy_levels:
-            return 100.0, f"Грейд {candidate_grade} соответствует"
+            return (
+                self._config.SALARY_WITHIN_SCORE,
+                f"Грейд {candidate_grade} соответствует",
+            )
 
         min_dist = min(abs(cand_lvl - v) for v in vacancy_levels)
-        score = max(100 - min_dist * 30, 0)
+        score = max(100 - min_dist * self._config.GRADE_DISTANCE_PENALTY_STEP, 0)
         detail = f"Грейд {candidate_grade}, ожидается {vacancy_grades}"
         return round(score, 2), detail
 
@@ -201,16 +211,28 @@ class CandidateScorer:
         candidate_location: str | None,
         vacancy_location: str | None,
     ) -> tuple[float, str]:
-        """Оценить совпадение локации."""
+        """Оценить совпадение локации"""
         if not vacancy_location or vacancy_location.lower() == "remote":
-            return 100.0, "Удалённая работа или локация не указана"
+            return (
+                self._config.LOCATION_MATCH_SCORE,
+                "Удалённая работа или локация не указана",
+            )
         if not candidate_location:
-            return 50.0, "Локация кандидата не указана"
+            return (
+                self._config.LOCATION_MISSING_CANDIDATE_SCORE,
+                "Локация кандидата не указана",
+            )
 
         if candidate_location.lower().strip() == vacancy_location.lower().strip():
-            return 100.0, f"Локация совпадает: {candidate_location}"
+            return (
+                self._config.LOCATION_MATCH_SCORE,
+                f"Локация совпадает: {candidate_location}",
+            )
 
-        return 30.0, f"Кандидат: {candidate_location}, вакансия: {vacancy_location}"
+        return (
+            self._config.LOCATION_DIFFER_SCORE,
+            f"Кандидат: {candidate_location}, вакансия: {vacancy_location}",
+        )
 
     def _score_salary(
         self,
@@ -218,24 +240,36 @@ class CandidateScorer:
         vacancy_min: int | None,
         vacancy_max: int | None,
     ) -> tuple[float, str]:
-        """Оценить попадание зарплатных ожиданий в вилку вакансии."""
+        """Оценить попадание зарплатных ожиданий в вилку вакансии"""
         if candidate_salary is None:
-            return 70.0, "Зарплатные ожидания кандидата не указаны"
+            return (
+                self._config.DEFAULT_SALARY_UNKNOWN_SCORE,
+                "Зарплатные ожидания кандидата не указаны",
+            )
 
         if vacancy_min is None and vacancy_max is None:
-            return 80.0, f"Вилка не указана, ожидания: {candidate_salary}"
+            return (
+                self._config.SALARY_NO_RANGE_SCORE,
+                f"Вилка не указана, ожидания: {candidate_salary}",
+            )
 
         low = vacancy_min or 0
         high = vacancy_max or float("inf")
 
         if low <= candidate_salary <= high:
-            return 100.0, f"Ожидания {candidate_salary} в вилке [{low}–{high}]"
+            return (
+                self._config.SALARY_WITHIN_SCORE,
+                f"Ожидания {candidate_salary} в вилке [{low}–{high}]",
+            )
 
         if candidate_salary < low:
-            return 90.0, f"Ожидания {candidate_salary} ниже вилки [{low}–{high}]"
+            return (
+                self._config.SALARY_BELOW_SCORE,
+                f"Ожидания {candidate_salary} ниже вилки [{low}–{high}]",
+            )
 
         overshoot = (candidate_salary - high) / high if high > 0 else 1
-        score = max(100 - overshoot * 100, 0)
+        score = max(100 - overshoot * self._config.SALARY_OVERSHOOT_SCALE, 0)
         detail = f"Ожидания {candidate_salary} выше вилки [{low}–{high}]"
         return round(score, 2), detail
 
@@ -246,7 +280,7 @@ def _make_explanation(
     score: float,
     weight: float,
 ) -> dict:
-    """Создать запись пояснения к оценке."""
+    """Создать запись пояснения к оценке"""
     return {
         "factor": factor,
         "detail": detail,

@@ -16,7 +16,7 @@ from common.database import Base
 
 
 class MatchRun(Base):
-    """Запуск матчинга — одна итерация скоринга кандидатов по вакансии."""
+    """Один запуск матчинга для конкретной вакансии"""
 
     __tablename__ = "match_runs"
 
@@ -43,7 +43,7 @@ class MatchRun(Base):
 
 
 class MatchResult(Base):
-    """Результат матчинга — оценка одного кандидата по вакансии."""
+    """Результат оценки одного кандидата в рамках запуска матчинга"""
 
     __tablename__ = "match_results"
 
@@ -72,7 +72,7 @@ class MatchResult(Base):
 
 
 class MatchExplanation(Base):
-    """Пояснение к оценке — вклад одного фактора."""
+    """Пояснение к частичной оценке одного фактора"""
 
     __tablename__ = "match_explanations"
 

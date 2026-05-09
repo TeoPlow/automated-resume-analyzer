@@ -1,6 +1,3 @@
--- Matching-сервис: таблицы match_runs, match_results, match_explanations.
--- Миграция идемпотентна (IF NOT EXISTS).
-
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE IF NOT EXISTS match_runs (

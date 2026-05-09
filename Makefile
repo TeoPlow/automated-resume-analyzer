@@ -61,9 +61,6 @@ test: install-requirements
 	$(VENV_PYTHON) -m pytest -q
 
 coverage: install-requirements
-	$(VENV_PYTHON) -m pytest gateway/tests -q --cov=gateway --cov-report=term-missing
-
-coverage-all: install-requirements
 	$(VENV_PYTHON) -m pytest -q --cov=. --cov-report=term-missing
 
 format: install-requirements

@@ -1,5 +1,7 @@
 import pytest
 
+from unittest.mock import MagicMock
+
 from matching.services.scorer import CandidateScorer, _make_explanation
 
 
@@ -215,3 +217,77 @@ class TestCompositeScore:
 
         assert final >= 0
         assert len(explanations) == 5
+
+
+class TestEmbeddingPath:
+
+    def test_embedding_match_uses_threshold(self, scorer, monkeypatch):
+        class FakeRow:
+            def __init__(self, values):
+                self._values = values
+
+            def max(self):
+                return max(self._values)
+
+            def argmax(self):
+                return self._values.index(max(self._values))
+
+        class FakeSimilarityMatrix:
+            def __init__(self, values):
+                self._values = values
+
+            def __getitem__(self, index):
+                return FakeRow(self._values[index])
+
+        class FakeEmbeddingMatrix:
+            def __init__(self, values):
+                self._values = values
+
+            @property
+            def T(self):
+                return FakeEmbeddingMatrix([list(column) for column in zip(*self._values)])
+
+            def __matmul__(self, other):
+                rows = []
+                for row in self._values:
+                    result_row = []
+                    for column in zip(*other._values):
+                        result_row.append(
+                            sum(left * right for left, right in zip(row, column))
+                        )
+                    rows.append(result_row)
+                return FakeSimilarityMatrix(rows)
+
+        class FakeModel:
+            def encode(self, texts, normalize_embeddings=True):
+                if texts == ["Python", "FastAPI"]:
+                    return FakeEmbeddingMatrix([[1.0, 0.0], [0.0, 1.0]])
+                return FakeEmbeddingMatrix([[1.0, 0.0]])
+
+        monkeypatch.setattr(scorer, "_get_model", MagicMock(return_value=FakeModel()))
+
+        result, detail = scorer._score_skills(["Python"], ["Python", "FastAPI"])
+
+        assert result == 50.0
+        assert "1/2" in detail
+
+    def test_embedding_error_falls_back_to_exact_match(self, scorer, monkeypatch):
+        monkeypatch.setattr(
+            scorer,
+            "_get_model",
+            MagicMock(side_effect=RuntimeError("boom")),
+        )
+
+        result, detail = scorer._score_skills(["Python"], ["Python"])
+
+        assert result == 100.0
+        assert "1/1" in detail
+
+
+class TestGradeFallbacks:
+
+    def test_unrecognized_vacancy_grade_uses_default_score(self, scorer):
+        result, detail = scorer._score_grade("middle", ["unknown-grade"])
+
+        assert result == 80.0
+        assert "не распознан" in detail

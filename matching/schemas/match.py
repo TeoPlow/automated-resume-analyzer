@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 
 class MatchWeights(BaseModel):
-    """Веса факторов скоринга (сумма = 1.0)."""
+    """Веса факторов скоринга (сумма = 1.0)"""
 
     skills: float = 0.40
     experience: float = 0.25
@@ -14,7 +14,7 @@ class MatchWeights(BaseModel):
 
 
 class MatchRunRequest(BaseModel):
-    """Запрос на запуск матчинга."""
+    """Запрос на запуск матчинга"""
 
     vacancy_id: str
     candidate_ids: list[str] | None = None
@@ -24,14 +24,14 @@ class MatchRunRequest(BaseModel):
 
 
 class MatchRunData(BaseModel):
-    """Ответ на запуск матчинга."""
+    """Ответ на запуск матчинга"""
 
     run_id: str
     status: str = "running"
 
 
 class ExplanationData(BaseModel):
-    """Пояснение к оценке по одному фактору."""
+    """Пояснение к оценке по одному фактору"""
 
     factor: str
     detail: str
@@ -41,7 +41,7 @@ class ExplanationData(BaseModel):
 
 
 class MatchResultData(BaseModel):
-    """Результат матчинга для одного кандидата."""
+    """Результат матчинга для одного кандидата"""
 
     id: str
     candidate_id: str

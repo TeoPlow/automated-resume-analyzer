@@ -2,7 +2,7 @@ import os
 
 
 class MatchingConfig:
-    """Настройки Matching-сервиса."""
+    """Настройки Matching-сервиса"""
 
     # PostgreSQL
     DATABASE_URL: str = os.getenv(
@@ -37,3 +37,39 @@ class MatchingConfig:
 
     # Логирование
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+
+    # Параметры скоринга (пороговые значения и дефолтные баллы)
+    SKILL_SIMILARITY_THRESHOLD: float = float(
+        os.getenv("SKILL_SIMILARITY_THRESHOLD", "0.6")
+    )
+
+    DEFAULT_EXPERIENCE_UNKNOWN_SCORE: float = float(
+        os.getenv("DEFAULT_EXPERIENCE_UNKNOWN_SCORE", "50.0")
+    )
+    DEFAULT_NO_EXPERIENCE_REQUIREMENTS_SCORE: float = float(
+        os.getenv("DEFAULT_NO_EXPERIENCE_REQUIREMENTS_SCORE", "80.0")
+    )
+
+    DEFAULT_GRADE_UNKNOWN_SCORE: float = float(
+        os.getenv("DEFAULT_GRADE_UNKNOWN_SCORE", "50.0")
+    )
+    DEFAULT_GRADE_VACANCY_UNKNOWN_SCORE: float = float(
+        os.getenv("DEFAULT_GRADE_VACANCY_UNKNOWN_SCORE", "80.0")
+    )
+    GRADE_DISTANCE_PENALTY_STEP: float = float(
+        os.getenv("GRADE_DISTANCE_PENALTY_STEP", "30.0")
+    )
+
+    LOCATION_MATCH_SCORE: float = float(os.getenv("LOCATION_MATCH_SCORE", "100.0"))
+    LOCATION_MISSING_CANDIDATE_SCORE: float = float(
+        os.getenv("LOCATION_MISSING_CANDIDATE_SCORE", "50.0")
+    )
+    LOCATION_DIFFER_SCORE: float = float(os.getenv("LOCATION_DIFFER_SCORE", "30.0"))
+
+    DEFAULT_SALARY_UNKNOWN_SCORE: float = float(
+        os.getenv("DEFAULT_SALARY_UNKNOWN_SCORE", "70.0")
+    )
+    SALARY_NO_RANGE_SCORE: float = float(os.getenv("SALARY_NO_RANGE_SCORE", "80.0"))
+    SALARY_WITHIN_SCORE: float = float(os.getenv("SALARY_WITHIN_SCORE", "100.0"))
+    SALARY_BELOW_SCORE: float = float(os.getenv("SALARY_BELOW_SCORE", "90.0"))
+    SALARY_OVERSHOOT_SCALE: float = float(os.getenv("SALARY_OVERSHOOT_SCALE", "100.0"))

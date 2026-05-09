@@ -8,7 +8,7 @@ from matching.models.match import MatchExplanation, MatchResult, MatchRun
 
 
 class MatchingRepository:
-    """Доступ к данным матчинга."""
+    """Доступ к данным матчинга"""
 
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
@@ -18,7 +18,7 @@ class MatchingRepository:
         vacancy_id: uuid.UUID,
         config: dict,
     ) -> MatchRun:
-        """Создать запись о запуске матчинга."""
+        """Создать запись о запуске матчинга"""
         run = MatchRun(
             vacancy_id=vacancy_id,
             status="running",
@@ -34,7 +34,7 @@ class MatchingRepository:
         status: str,
         total_candidates: int,
     ) -> None:
-        """Завершить запуск матчинга."""
+        """Завершить запуск матчинга"""
         stmt = (
             update(MatchRun)
             .where(MatchRun.id == run_id)
@@ -47,7 +47,7 @@ class MatchingRepository:
         await self._session.execute(stmt)
 
     async def get_run(self, run_id: uuid.UUID) -> MatchRun | None:
-        """Получить запуск матчинга по ID."""
+        """Получить запуск матчинга по ID"""
         return await self._session.get(MatchRun, run_id)
 
     async def save_result(
@@ -59,7 +59,7 @@ class MatchingRepository:
         final_score: float,
         rank: int,
     ) -> MatchResult:
-        """Сохранить результат скоринга кандидата."""
+        """Сохранить результат скоринга кандидата"""
         result = MatchResult(
             run_id=run_id,
             candidate_id=candidate_id,
@@ -85,7 +85,7 @@ class MatchingRepository:
         weight: float,
         impact: float,
     ) -> MatchExplanation:
-        """Сохранить пояснение к оценке по фактору."""
+        """Сохранить пояснение к оценке по фактору"""
         explanation = MatchExplanation(
             result_id=result_id,
             factor=factor,
@@ -99,7 +99,7 @@ class MatchingRepository:
         return explanation
 
     async def get_results_by_run(self, run_id: uuid.UUID) -> list[MatchResult]:
-        """Получить все результаты запуска матчинга."""
+        """Получить все результаты запуска матчинга"""
         stmt = (
             select(MatchResult)
             .where(MatchResult.run_id == run_id)
@@ -111,7 +111,7 @@ class MatchingRepository:
     async def get_latest_results_by_vacancy(
         self, vacancy_id: uuid.UUID
     ) -> list[MatchResult]:
-        """Получить результаты последнего завершённого запуска для вакансии."""
+        """Получить результаты последнего завершённого запуска для вакансии"""
         run = await self.get_latest_completed_run_by_vacancy(vacancy_id)
         if not run:
             return []
@@ -120,7 +120,7 @@ class MatchingRepository:
     async def get_latest_completed_run_by_vacancy(
         self, vacancy_id: uuid.UUID
     ) -> MatchRun | None:
-        """Получить последний завершённый запуск матчинга для вакансии."""
+        """Получить последний завершённый запуск матчинга для вакансии"""
         run_stmt = (
             select(MatchRun)
             .where(
@@ -136,7 +136,7 @@ class MatchingRepository:
     async def get_results_by_candidate(
         self, candidate_id: uuid.UUID
     ) -> list[MatchResult]:
-        """Получить все результаты матчинга для кандидата (последние по вакансиям)."""
+        """Получить все результаты матчинга для кандидата (последние по вакансиям)"""
         stmt = (
             select(MatchResult)
             .where(MatchResult.candidate_id == candidate_id)
@@ -146,5 +146,5 @@ class MatchingRepository:
         return list(result.scalars().all())
 
     async def commit(self) -> None:
-        """Зафиксировать транзакцию."""
+        """Зафиксировать транзакцию"""
         await self._session.commit()

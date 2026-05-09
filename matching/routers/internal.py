@@ -14,7 +14,7 @@ def create_router(
     service: MatchingService,
     internal_token: str,
 ) -> APIRouter:
-    """Создать внутренний роутер матчинга."""
+    """Создать внутренний роутер матчинга"""
     router = APIRouter(prefix="/internal/v1", tags=["internal"])
 
     @router.post(
@@ -25,7 +25,7 @@ def create_router(
         vacancy_id: str,
         request: Request,
     ) -> BaseResponse[MatchRunData]:
-        """Запустить матчинг для вакансии (вызывается event consumer)."""
+        """Запустить матчинг для вакансии"""
         require_internal(request, internal_token)
         body = MatchRunRequest(vacancy_id=vacancy_id)
         async with db.session() as session:
@@ -41,7 +41,7 @@ def create_router(
         vacancy_id: str,
         request: Request,
     ) -> BaseResponse[list[MatchResultData]]:
-        """Получить результаты матчинга для вакансии."""
+        """Получить результаты матчинга для вакансии"""
         require_internal(request, internal_token)
         async with db.session() as session:
             repo = MatchingRepository(session)
