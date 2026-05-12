@@ -14,14 +14,14 @@ from common.database import Database
 
 
 def create_router(config: ProfileConfig, db: Database) -> APIRouter:
-    """Создать роутер для внутреннего API (защищён X-Internal-Token)."""
+    """Создать роутер для внутреннего API"""
     router = APIRouter(prefix="/internal/v1", tags=["internal"])
 
     @router.get("/candidates/active")
     async def get_active_candidates(
         request: Request,
     ) -> BaseResponse[list[CandidateData]]:
-        """Получить всех кандидатов с готовым агрегированным профилем."""
+        """Получить всех кандидатов с готовым агрегированным профилем"""
         require_internal(request, config.INTERNAL_TOKEN)
 
         async with db.session() as session:
@@ -35,7 +35,7 @@ def create_router(config: ProfileConfig, db: Database) -> APIRouter:
         candidate_id: uuid.UUID,
         request: Request,
     ) -> BaseResponse[CandidateData]:
-        """Получить кандидата по ID (внутренний вызов)."""
+        """Получить кандидата по ID (внутренний вызов)"""
         require_internal(request, config.INTERNAL_TOKEN)
 
         async with db.session() as session:
@@ -56,7 +56,7 @@ def create_router(config: ProfileConfig, db: Database) -> APIRouter:
         body: CandidateBulkRequest,
         request: Request,
     ) -> BaseResponse[list[CandidateData]]:
-        """Получить список кандидатов по массиву ID (внутренний вызов)."""
+        """Получить список кандидатов по массиву ID (внутренний вызов)"""
         require_internal(request, config.INTERNAL_TOKEN)
 
         import uuid as uuid_mod
@@ -72,11 +72,8 @@ def create_router(config: ProfileConfig, db: Database) -> APIRouter:
     return router
 
 
-# --- Приватные функции ---
-
-
 def _to_candidate_data(candidate) -> CandidateData:
-    """Преобразовать ORM-модель кандидата в Pydantic-схему."""
+    """Преобразовать ORM-модель кандидата в Pydantic-схему"""
     from profile.schemas.candidate import CandidateProfileData
 
     profile = None

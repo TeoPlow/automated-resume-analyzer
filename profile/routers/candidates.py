@@ -21,7 +21,7 @@ from common.database import Database
 
 
 def create_router(db: Database) -> APIRouter:
-    """Создать роутер для работы с кандидатами."""
+    """Создать роутер для работы с кандидатами"""
     router = APIRouter(prefix="/candidates", tags=["candidates"])
 
     @router.get("/{candidate_id}")
@@ -29,7 +29,7 @@ def create_router(db: Database) -> APIRouter:
         candidate_id: str,
         actor: Actor = Depends(extract_actor),
     ) -> BaseResponse[CandidateData]:
-        """Получить полный профиль кандидата по ID."""
+        """Получить полный профиль кандидата по ID"""
         require_permission(actor, "candidates:read")
 
         async with db.session() as session:
@@ -51,7 +51,7 @@ def create_router(db: Database) -> APIRouter:
         body: CandidateUpdateRequest,
         actor: Actor = Depends(extract_actor),
     ) -> BaseResponse[CandidateData]:
-        """Обновить данные кандидата (ФИО, email, телефон)."""
+        """Обновить данные кандидата (ФИО, email, телефон)"""
         require_permission(actor, "candidates:write")
 
         async with db.session() as session:
@@ -78,7 +78,7 @@ def create_router(db: Database) -> APIRouter:
         candidate_id: str,
         actor: Actor = Depends(extract_actor),
     ) -> BaseResponse[list[ResumeData]]:
-        """Получить все резюме кандидата."""
+        """Получить все резюме кандидата"""
         require_permission(actor, "candidates:read")
 
         async with db.session() as session:
@@ -92,7 +92,7 @@ def create_router(db: Database) -> APIRouter:
         candidate_id: str,
         actor: Actor = Depends(extract_actor),
     ) -> None:
-        """Удалить кандидата (только администратор)."""
+        """Удалить кандидата (только администратор)"""
         require_permission(actor, "candidates:write")
         require_admin(actor)
 
@@ -110,11 +110,8 @@ def create_router(db: Database) -> APIRouter:
     return router
 
 
-# --- Приватные функции ---
-
-
 def _parse_uuid(value: str):
-    """Преобразовать строку в UUID."""
+    """Преобразовать строку в UUID"""
     import uuid
 
     try:
@@ -128,7 +125,7 @@ def _parse_uuid(value: str):
 
 
 def _to_candidate_data(candidate) -> CandidateData:
-    """Преобразовать ORM-модель кандидата в Pydantic-схему."""
+    """Преобразовать ORM-модель кандидата в Pydantic-схему"""
     profile = None
     if candidate.profile:
         p = candidate.profile
@@ -152,7 +149,7 @@ def _to_candidate_data(candidate) -> CandidateData:
 
 
 def _to_resume_data(resume) -> ResumeData:
-    """Преобразовать ORM-модель резюме в Pydantic-схему."""
+    """Преобразовать ORM-модель резюме в Pydantic-схему"""
     from profile.schemas.resume import ParsedData
 
     parsed = None

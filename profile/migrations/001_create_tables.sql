@@ -1,6 +1,3 @@
--- Profile-сервис: таблицы candidates, resumes, candidate_profiles.
--- Миграция идемпотентна (IF NOT EXISTS).
-
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE IF NOT EXISTS candidates (

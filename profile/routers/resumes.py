@@ -25,7 +25,7 @@ def create_router(
     event_publisher: EventPublisher,
     resume_processor: ResumeProcessor,
 ) -> APIRouter:
-    """Создать роутер для загрузки резюме."""
+    """Создать роутер для загрузки резюме"""
     router = APIRouter(prefix="/resumes", tags=["resumes"])
 
     @router.post("/upload")
@@ -35,11 +35,7 @@ def create_router(
         external_id: str | None = None,
         actor: Actor = Depends(extract_actor),
     ) -> BaseResponse[ResumeUploadData]:
-        """Загрузить резюме: валидация → MinIO → БД → событие.
-
-        Возвращает resume_id и статус uploaded.
-        Обработка (парсинг) выполняется асинхронно.
-        """
+        """Загрузить резюме: валидация -> MinIO -> БД -> событие"""
         require_permission(actor, "resumes:upload")
 
         content = await file.read()
@@ -84,7 +80,7 @@ def create_router(
         resume_id: str,
         actor: Actor = Depends(extract_actor),
     ) -> BaseResponse[ResumeStatusData]:
-        """Получить текущий статус обработки резюме по ID."""
+        """Получить текущий статус обработки резюме по ID"""
         require_permission(actor, "resumes:upload")
 
         parsed_resume_id = _parse_uuid(resume_id)
